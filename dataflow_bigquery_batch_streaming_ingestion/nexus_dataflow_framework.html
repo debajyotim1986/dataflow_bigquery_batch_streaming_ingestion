@@ -1,0 +1,2500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Nexus Dataflow Framework — Unified Apache Beam on Google Cloud</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+:root {
+  --white: #ffffff;
+  --bg: #ffffff;
+  --surface: #F8FAFF;
+  --surface2: #EEF3FF;
+  --border: #D6E0F5;
+  --border-light: #EBF0FB;
+
+  --blue: #1967D2;
+  --blue-dark: #0D47A1;
+  --blue-light: #E8F0FE;
+  --blue-mid: #4285F4;
+
+  --green: #1A7340;
+  --green-light: #E6F4EA;
+  --green-mid: #34A853;
+
+  --purple: #6200EE;
+  --purple-light: #EDE7F6;
+  --purple-mid: #9C4DCA;
+
+  --orange: #E65100;
+  --orange-light: #FFF3E0;
+  --orange-mid: #FB8C00;
+
+  --red: #C62828;
+  --red-light: #FEECEC;
+
+  --text: #1C2333;
+  --text-secondary: #4A5568;
+  --text-muted: #718096;
+  --text-caption: #A0AEC0;
+
+  --s1-color: #1967D2;
+  --s1-bg: #E8F0FE;
+  --s2-color: #1A7340;
+  --s2-bg: #E6F4EA;
+  --s3-color: #6200EE;
+  --s3-bg: #EDE7F6;
+
+  --sidebar-w: 268px;
+  --font-body: 'DM Sans', sans-serif;
+  --font-display: 'Outfit', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 2px 12px rgba(25,103,210,0.09);
+  --shadow-md: 0 4px 24px rgba(25,103,210,0.12);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.65;
+  display: flex;
+}
+
+/* ─── SIDEBAR ─── */
+#sidebar {
+  width: var(--sidebar-w);
+  min-height: 100vh;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  background: var(--text);
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-brand {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.brand-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--blue-mid), var(--purple-mid));
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.brand-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.45);
+  margin-top: 2px;
+  font-weight: 400;
+}
+
+.sidebar-section {
+  padding: 14px 12px 6px;
+}
+
+.sidebar-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: rgba(255,255,255,0.3);
+  padding: 0 8px;
+  margin-bottom: 4px;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.65);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.18s;
+  margin-bottom: 1px;
+}
+
+.nav-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+.nav-item.active { background: rgba(66,133,244,0.2); color: var(--blue-mid); }
+.nav-item.active .nav-dot { background: var(--blue-mid); }
+
+.nav-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  flex-shrink: 0;
+}
+
+.nav-s1 .nav-dot { background: var(--s1-color); }
+.nav-s2 .nav-dot { background: var(--s2-color); }
+.nav-s3 .nav-dot { background: var(--s3-color); }
+
+.nav-item .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 11.5px;
+  color: rgba(255,255,255,0.3);
+}
+
+/* ─── MAIN CONTENT ─── */
+#main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-height: 100vh;
+}
+
+/* ─── HERO ─── */
+.hero {
+  background: linear-gradient(135deg, #0A1628 0%, #1C2F5E 50%, #0D3B6B 100%);
+  padding: 64px 56px 52px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 50%, rgba(66,133,244,0.15) 0%, transparent 60%),
+    radial-gradient(circle at 80% 20%, rgba(156,77,202,0.12) 0%, transparent 50%),
+    radial-gradient(circle at 60% 80%, rgba(52,168,83,0.08) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+.hero::after {
+  content: 'NDF';
+  position: absolute;
+  right: -20px; bottom: -40px;
+  font-family: var(--font-display);
+  font-size: 220px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.025);
+  letter-spacing: -8px;
+  pointer-events: none;
+  line-height: 1;
+}
+
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(66,133,244,0.2);
+  border: 1px solid rgba(66,133,244,0.4);
+  color: #7EB3FF;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  margin-bottom: 18px;
+}
+
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.15;
+  letter-spacing: -1px;
+  margin-bottom: 14px;
+  max-width: 700px;
+  position: relative;
+}
+
+.hero h1 span { color: #6BB5FF; }
+
+.hero-desc {
+  font-size: 16px;
+  color: rgba(255,255,255,0.65);
+  max-width: 680px;
+  margin-bottom: 28px;
+  line-height: 1.7;
+  position: relative;
+}
+
+.hero-chips {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  position: relative;
+}
+
+.hero-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.75);
+  font-size: 12.5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+}
+
+.hero-chip .dot { width: 7px; height: 7px; border-radius: 50%; }
+
+/* ─── SECTIONS ─── */
+.section {
+  padding: 52px 56px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.section:last-child { border-bottom: none; }
+
+.section-header {
+  margin-bottom: 32px;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--blue);
+  margin-bottom: 8px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+.section-subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  line-height: 1.65;
+  max-width: 780px;
+}
+
+/* ─── SCENARIO HEADERS ─── */
+.scenario-header {
+  display: flex; align-items: flex-start; gap: 16px;
+  padding: 24px 28px;
+  border-radius: var(--radius);
+  margin-bottom: 28px;
+  border-left: 4px solid;
+}
+
+.scenario-header.s1 { background: var(--s1-bg); border-color: var(--s1-color); }
+.scenario-header.s2 { background: var(--s2-bg); border-color: var(--s2-color); }
+.scenario-header.s3 { background: var(--s3-bg); border-color: var(--s3-color); }
+
+.scenario-num {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  opacity: 0.35;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.s1 .scenario-num { color: var(--s1-color); }
+.s2 .scenario-num { color: var(--s2-color); }
+.s3 .scenario-num { color: var(--s3-color); }
+
+.scenario-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.s1 .scenario-title { color: var(--s1-color); }
+.s2 .scenario-title { color: var(--s2-color); }
+.s3 .scenario-title { color: var(--s3-color); }
+
+.scenario-desc { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+
+/* ─── DIAGRAM BOX ─── */
+.diagram-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 20px;
+  margin: 24px 0;
+  overflow-x: auto;
+}
+
+.diagram-caption {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 12px;
+  font-style: italic;
+}
+
+/* ─── CARDS GRID ─── */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+.card-icon {
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.card-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.card-desc { font-size: 13.5px; color: var(--text-secondary); line-height: 1.55; }
+
+.card-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
+
+.tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: var(--blue-light);
+  color: var(--blue);
+}
+
+.tag.green { background: var(--green-light); color: var(--green); }
+.tag.purple { background: var(--purple-light); color: var(--purple); }
+.tag.orange { background: var(--orange-light); color: var(--orange); }
+.tag.red { background: var(--red-light); color: var(--red); }
+
+/* ─── CODE BLOCK ─── */
+.code-block {
+  background: #0D1117;
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: 16px 0;
+  box-shadow: var(--shadow);
+}
+
+.code-header {
+  background: #161B22;
+  padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid #30363D;
+}
+
+.code-lang {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: #8B949E;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.code-dots { display: flex; gap: 5px; }
+.code-dot { width: 10px; height: 10px; border-radius: 50%; }
+.code-dot:nth-child(1) { background: #FF5F57; }
+.code-dot:nth-child(2) { background: #FFBD2E; }
+.code-dot:nth-child(3) { background: #28CA41; }
+
+pre.code-content {
+  padding: 18px 20px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.65;
+  color: #E6EDF3;
+}
+
+.kw { color: #FF7B72; }
+.str { color: #A5D6FF; }
+.num { color: #79C0FF; }
+.cmt { color: #8B949E; font-style: italic; }
+.fn { color: #D2A8FF; }
+.cls { color: #FFA657; }
+.key { color: #79C0FF; }
+.val { color: #A5D6FF; }
+.bool { color: #FF7B72; }
+.op { color: #FF7B72; }
+
+/* ─── TABLE ─── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  margin: 16px 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.data-table th {
+  background: var(--surface2);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 11px 16px;
+  text-align: left;
+  border-bottom: 2px solid var(--border);
+}
+
+.data-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: top;
+  color: var(--text-secondary);
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--surface); }
+
+.mono { font-family: var(--font-mono); font-size: 12.5px; }
+.pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.pill-blue { background: var(--blue-light); color: var(--blue); }
+.pill-green { background: var(--green-light); color: var(--green); }
+.pill-purple { background: var(--purple-light); color: var(--purple); }
+.pill-orange { background: var(--orange-light); color: var(--orange); }
+.pill-red { background: var(--red-light); color: var(--red); }
+.pill-gray { background: #F1F3F4; color: #5F6368; }
+
+/* ─── STEP FLOW ─── */
+.step-flow {
+  display: flex; align-items: flex-start; gap: 0;
+  margin: 24px 0;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.step-item {
+  display: flex; flex-direction: column; align-items: center;
+  flex: 1; min-width: 110px;
+  position: relative;
+}
+
+.step-item:not(:last-child)::after {
+  content: '→';
+  position: absolute;
+  right: -10px; top: 16px;
+  font-size: 18px;
+  color: var(--text-caption);
+  z-index: 1;
+}
+
+.step-num {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: 14px; font-weight: 800;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.s1 .step-num { background: var(--s1-color); }
+.s2 .step-num { background: var(--s2-color); }
+.s3 .step-num { background: var(--s3-color); }
+.core .step-num { background: var(--blue); }
+
+.step-label {
+  font-size: 12px; font-weight: 600;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.3;
+  padding: 0 4px;
+}
+
+.step-sub {
+  font-size: 11px; color: var(--text-muted);
+  text-align: center; margin-top: 2px;
+}
+
+/* ─── CALLOUT ─── */
+.callout {
+  padding: 16px 20px;
+  border-radius: var(--radius-sm);
+  margin: 16px 0;
+  border-left: 3px solid;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.callout.info { background: var(--blue-light); border-color: var(--blue); color: var(--blue-dark); }
+.callout.success { background: var(--green-light); border-color: var(--green); color: var(--green); }
+.callout.warn { background: var(--orange-light); border-color: var(--orange); color: var(--orange); }
+.callout.tip {
+  background: linear-gradient(135deg, #F0F7FF, #EDE7F6);
+  border-color: var(--purple-mid);
+  color: var(--purple);
+}
+
+.callout strong { font-weight: 700; }
+
+/* ─── ENV TABS ─── */
+.env-tabs { display: flex; gap: 0; margin-bottom: 0; border-radius: var(--radius) var(--radius) 0 0; overflow: hidden; }
+
+.env-tab {
+  flex: 1; padding: 12px 20px; text-align: center;
+  font-family: var(--font-display); font-size: 13.5px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+}
+
+.env-tab:not(:last-child) { border-right: none; }
+.env-tab.active-int { background: var(--blue-light); color: var(--blue); border-color: var(--blue); }
+.env-tab.active-preprod { background: var(--orange-light); color: var(--orange); border-color: var(--orange); }
+.env-tab.active-prod { background: var(--green-light); color: var(--green); border-color: var(--green); }
+
+.env-content {
+  border: 1px solid var(--border); border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 20px;
+  background: var(--bg);
+}
+
+/* ─── INFO STRIP ─── */
+.info-strip {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin: 20px 0;
+}
+
+.info-strip-item {
+  display: flex; flex-direction: column; gap: 2px;
+  min-width: 120px;
+}
+
+.info-strip-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--text-muted);
+}
+
+.info-strip-value {
+  font-family: var(--font-display); font-size: 16px; font-weight: 700;
+  color: var(--text);
+}
+
+/* ─── DQ RULE CARD ─── */
+.dq-rule-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  margin-bottom: 10px;
+  display: flex; align-items: flex-start; gap: 14px;
+}
+
+.dq-rule-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.dq-rule-name {
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  color: var(--text); margin-bottom: 3px;
+}
+
+.dq-rule-desc { font-size: 13px; color: var(--text-secondary); }
+.dq-rule-meta { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+/* ─── DIVIDER ─── */
+.divider {
+  border: none; border-top: 1px solid var(--border-light);
+  margin: 28px 0;
+}
+
+/* ─── COMPONENT ARCH ─── */
+.arch-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin: 20px 0;
+}
+
+.arch-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  border-top: 3px solid var(--blue);
+}
+
+.arch-card.green { border-top-color: var(--green-mid); }
+.arch-card.purple { border-top-color: var(--purple-mid); }
+.arch-card.orange { border-top-color: var(--orange-mid); }
+.arch-card.red { border-top-color: #EA4335; }
+.arch-card.teal { border-top-color: #00897B; }
+
+.arch-card-name {
+  font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+  color: var(--blue); margin-bottom: 6px;
+}
+
+.arch-card.green .arch-card-name { color: var(--green); }
+.arch-card.purple .arch-card-name { color: var(--purple-mid); }
+.arch-card.orange .arch-card-name { color: var(--orange); }
+.arch-card.red .arch-card-name { color: #EA4335; }
+.arch-card.teal .arch-card-name { color: #00897B; }
+
+.arch-card-title { font-family: var(--font-display); font-size: 14.5px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.arch-card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+
+.arch-card ul { margin-top: 8px; padding-left: 16px; }
+.arch-card ul li { font-size: 12.5px; color: var(--text-muted); margin-bottom: 3px; }
+
+/* ─── BADGE ─── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 700;
+  padding: 2px 8px; border-radius: 3px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.badge-new { background: var(--blue-light); color: var(--blue); }
+.badge-core { background: #FFF3E0; color: #E65100; }
+.badge-ext { background: var(--green-light); color: var(--green); }
+
+/* ─── Mermaid override ─── */
+.mermaid { display: flex; justify-content: center; }
+
+/* ─── TOC anchor ─── */
+[id] { scroll-margin-top: 24px; }
+
+/* ─── Two col ─── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 16px 0; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 16px 0; }
+
+@media(max-width: 1100px) {
+  .arch-grid { grid-template-columns: 1fr 1fr; }
+  .two-col { grid-template-columns: 1fr; }
+  .three-col { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<nav id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">⚡</div>
+    <div class="brand-name">Nexus Dataflow</div>
+    <div class="brand-sub">Unified Apache Beam Framework · GCP</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Introduction</div>
+    <a href="#overview" class="nav-item active"><span class="nav-icon">🏠</span> Overview <span class="nav-dot"></span></a>
+    <a href="#architecture" class="nav-item"><span class="nav-icon">🏗️</span> Master Architecture <span class="nav-dot"></span></a>
+    <a href="#framework-core" class="nav-item"><span class="nav-icon">⚙️</span> Framework Core <span class="nav-dot"></span></a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Scenarios</div>
+    <a href="#scenario1" class="nav-item nav-s1"><span class="nav-icon">📨</span> Scenario 1 · PubSub Batch <span class="nav-dot"></span></a>
+    <a href="#scenario2" class="nav-item nav-s2"><span class="nav-icon">⏰</span> Scenario 2 · Composer Daily <span class="nav-dot"></span></a>
+    <a href="#scenario3" class="nav-item nav-s3"><span class="nav-icon">🌊</span> Scenario 3 · Streaming <span class="nav-dot"></span></a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Configuration</div>
+    <a href="#schema-registry" class="nav-item"><span class="nav-icon">📋</span> Schema Registry <span class="nav-dot"></span></a>
+    <a href="#table-mapping" class="nav-item"><span class="nav-icon">🗺️</span> Table Mapping <span class="nav-dot"></span></a>
+    <a href="#dq-engine" class="nav-item"><span class="nav-icon">✅</span> DQ Rules Engine <span class="nav-dot"></span></a>
+    <a href="#delta-engine" class="nav-item"><span class="nav-icon">🔍</span> Delta Detection <span class="nav-dot"></span></a>
+    <a href="#environments" class="nav-item"><span class="nav-icon">🌐</span> Environments <span class="nav-dot"></span></a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Operations</div>
+    <a href="#metadata-bq" class="nav-item"><span class="nav-icon">🗄️</span> Metadata in BigQuery <span class="nav-dot"></span></a>
+    <a href="#pipeline-factory" class="nav-item"><span class="nav-icon">🏭</span> Pipeline Factory <span class="nav-dot"></span></a>
+    <a href="#observability" class="nav-item"><span class="nav-icon">📊</span> Observability <span class="nav-dot"></span></a>
+    <a href="#deployment" class="nav-item"><span class="nav-icon">🚀</span> Deployment <span class="nav-dot"></span></a>
+    <a href="#error-handling" class="nav-item"><span class="nav-icon">🛡️</span> Error Handling <span class="nav-dot"></span></a>
+  </div>
+
+  <div class="sidebar-footer">
+    v1.0.0 · Apache Beam 2.55 · GCP<br/>
+    Google Dataflow · BigQuery · PubSub
+  </div>
+</nav>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main id="main">
+
+<!-- ─── HERO ─── -->
+<div class="hero">
+  <div class="hero-badge">⚡ Enterprise Framework · Apache Beam on Google Cloud</div>
+  <h1>Nexus <span>Dataflow</span> Framework</h1>
+  <p class="hero-desc">
+    A production-grade, schema-agnostic unified data processing framework built on Apache Beam and Google Cloud Dataflow.
+    Supports event-driven batch ingestion, scheduled delta processing, and real-time sliding-window streaming
+    from a single configurable runtime — for any table, any schema, any environment.
+  </p>
+  <div class="hero-chips">
+    <span class="hero-chip"><span class="dot" style="background:#4285F4"></span> Google Dataflow</span>
+    <span class="hero-chip"><span class="dot" style="background:#EA4335"></span> Apache Beam 2.55</span>
+    <span class="hero-chip"><span class="dot" style="background:#34A853"></span> BigQuery</span>
+    <span class="hero-chip"><span class="dot" style="background:#FBBC04"></span> Cloud PubSub</span>
+    <span class="hero-chip"><span class="dot" style="background:#017CEE"></span> Cloud Composer</span>
+    <span class="hero-chip"><span class="dot" style="background:#8B5CF6"></span> Dataplex DQ</span>
+    <span class="hero-chip"><span class="dot" style="background:#00BCD4"></span> GCS Config Store</span>
+  </div>
+</div>
+
+<!-- ═══ SECTION: OVERVIEW ═══ -->
+<section class="section" id="overview">
+  <div class="section-header">
+    <div class="section-label">Overview</div>
+    <div class="section-title">What is Nexus Dataflow Framework?</div>
+    <div class="section-subtitle">
+      NDF (Nexus Dataflow Framework) is a <strong>single, unified Apache Beam runtime</strong> that handles three distinct data processing patterns —
+      event-triggered batch loading, scheduler-driven delta sync, and real-time windowed streaming —
+      through a shared pipeline factory, schema registry, DQ engine, and delta detector.
+    </div>
+  </div>
+
+  <div class="info-strip">
+    <div class="info-strip-item"><div class="info-strip-label">Scenarios Covered</div><div class="info-strip-value">3</div></div>
+    <div class="info-strip-item"><div class="info-strip-label">DQ Rule Types</div><div class="info-strip-value">10</div></div>
+    <div class="info-strip-item"><div class="info-strip-label">Environments</div><div class="info-strip-value">3</div></div>
+    <div class="info-strip-item"><div class="info-strip-label">Schema Source</div><div class="info-strip-value">BQ INFORMATION_SCHEMA</div></div>
+    <div class="info-strip-item"><div class="info-strip-label">Config Format</div><div class="info-strip-value">JSON</div></div>
+    <div class="info-strip-item"><div class="info-strip-label">Delta Strategy</div><div class="info-strip-value">SHA-256 + Key MERGE</div></div>
+  </div>
+
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-icon">📨</div>
+      <div class="card-title">Scenario 1 — Event-Triggered Batch</div>
+      <div class="card-desc">PubSub message arrives → Dataflow job triggers → loads file from GCS → runs DQ checks → detects delta → writes to BQ staging table.</div>
+      <div class="card-tags"><span class="tag">PubSub</span><span class="tag">GCS</span><span class="tag">Batch</span></div>
+    </div>
+    <div class="card">
+      <div class="card-icon">⏰</div>
+      <div class="card-title">Scenario 2 — Composer-Scheduled Daily</div>
+      <div class="card-desc">Cloud Composer DAG triggers once daily → Dataflow reads from BQ source table → compares with staging → writes only changed/new records.</div>
+      <div class="card-tags"><span class="tag green">Composer</span><span class="tag green">BigQuery</span><span class="tag green">Scheduled</span></div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🌊</div>
+      <div class="card-title">Scenario 3 — Sliding Window Stream</div>
+      <div class="card-desc">Continuous PubSub data stream → Dataflow streaming job processes in 1-minute sliding windows → DQ + delta detection → writes to staging.</div>
+      <div class="card-tags"><span class="tag purple">Streaming</span><span class="tag purple">Windowed</span><span class="tag purple">Real-time</span></div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📋</div>
+      <div class="card-title">Dynamic Schema Discovery</div>
+      <div class="card-desc">Schema fetched live from BigQuery INFORMATION_SCHEMA. No hardcoded schemas — works for any table in any dataset, including nested/repeated fields.</div>
+      <div class="card-tags"><span class="tag">INFORMATION_SCHEMA</span><span class="tag">Dynamic</span></div>
+    </div>
+    <div class="card">
+      <div class="card-icon">✅</div>
+      <div class="card-title">JSON-Driven DQ Engine</div>
+      <div class="card-desc">10 rule types (null check, uniqueness, range, regex, referential, freshness, threshold, custom SQL, type check, row count). Rules stored in GCS/BQ.</div>
+      <div class="card-tags"><span class="tag orange">DQ Rules</span><span class="tag orange">JSON</span></div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🗺️</div>
+      <div class="card-title">Universal Table Mapping</div>
+      <div class="card-desc">Central mapping registry binds source → staging for each scenario, environment, and table. Supports composite delta keys, partition columns, and watermarks.</div>
+      <div class="card-tags"><span class="tag">Mapping</span><span class="tag">Multi-env</span></div>
+    </div>
+  </div>
+
+  <div class="callout tip">
+    <strong>Design Philosophy:</strong> Every component is driven by configuration (JSON + BQ metadata), not code. To onboard a new table, you add a mapping entry and DQ rule file — zero pipeline code changes needed.
+  </div>
+</section>
+
+<!-- ═══ SECTION: MASTER ARCHITECTURE ═══ -->
+<section class="section" id="architecture">
+  <div class="section-header">
+    <div class="section-label">Architecture</div>
+    <div class="section-title">Master Architecture Diagram</div>
+    <div class="section-subtitle">End-to-end view of all three scenarios flowing through the shared Nexus Dataflow Framework layers.</div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart TB
+    subgraph TRIG["⚡ TRIGGER LAYER"]
+        direction LR
+        T1["📨 PubSub\nGCS Notification"]
+        T2["⏰ Cloud Composer\nDAG Schedule"]
+        T3["🌊 PubSub\nData Stream"]
+    end
+
+    subgraph CONFIG["⚙️ CONFIG & METADATA LAYER (GCS + BigQuery)"]
+        direction LR
+        CM["Env Config\nint/preprod/prod"]
+        TM["Table Mapping\nRegistry JSON"]
+        DQR["DQ Rules\nJSON per table"]
+        SR["Schema Registry\nBQ INFO_SCHEMA"]
+    end
+
+    subgraph NDF["🏭 NEXUS DATAFLOW FRAMEWORK — Pipeline Factory"]
+        direction TB
+        PF["PipelineFactory\ncreate_pipeline(mode, mapping)"]
+        subgraph BEAM["🔧 APACHE BEAM TRANSFORMS"]
+            direction LR
+            B1["ReadSource\nTransform"]
+            B2["ParseSchema\nTransform"]
+            B3["DQValidator\nTransform"]
+            B4["DeltaDetector\nTransform"]
+            B5["PartitionOutput\nTransform"]
+        end
+        PF --> BEAM
+    end
+
+    subgraph SINK["💾 SINK LAYER — BigQuery Staging"]
+        direction LR
+        ST["stg_table\nINSERT new"]
+        UT["stg_table\nUPDATE changed"]
+        DL["dead_letter\nDQ failed"]
+        AU["audit_runs\nLineage log"]
+    end
+
+    subgraph META_BQ["🗄️ FRAMEWORK METADATA — BigQuery Dataset: ndf_meta"]
+        direction LR
+        PRL["pipeline_runs"]
+        DQT["dq_results"]
+        DST["delta_stats"]
+        SCH["schema_cache"]
+    end
+
+    T1 -->|"GCS file arrival\nmsg payload"| PF
+    T2 -->|"run_id + mapping_id\nDAG params"| PF
+    T3 -->|"stream msgs\ncontinuous"| PF
+
+    CM --> PF
+    TM --> PF
+    DQR --> B3
+    SR --> B2
+
+    B1 --> B2 --> B3 --> B4 --> B5
+    B5 --> ST
+    B5 --> UT
+    B3 -->|DQ fail| DL
+    B5 --> AU
+
+    PF --> META_BQ
+
+    classDef scenario1 fill:#E8F0FE,stroke:#1967D2,color:#1967D2
+    classDef scenario2 fill:#E6F4EA,stroke:#1A7340,color:#1A7340
+    classDef scenario3 fill:#EDE7F6,stroke:#6200EE,color:#6200EE
+    classDef core fill:#F8FAFF,stroke:#4285F4,color:#1C2333
+    classDef sink fill:#FFF8E1,stroke:#F9AB00,color:#5D4037
+    classDef meta fill:#F3E5F5,stroke:#9C4DCA,color:#4A148C
+
+    class T1 scenario1
+    class T2 scenario2
+    class T3 scenario3
+    class B1,B2,B3,B4,B5,PF core
+    class ST,UT,DL,AU sink
+    class PRL,DQT,DST,SCH meta
+    </div>
+    <div class="diagram-caption">Fig 1. Nexus Dataflow Framework — Complete Architecture. All three trigger paths converge into a single Pipeline Factory, share the same Beam transforms, and write to the same staging layer.</div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:12px;color:var(--text)">Architectural Layers</h3>
+      <table class="data-table">
+        <thead><tr><th>Layer</th><th>Responsibility</th><th>Technology</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Trigger</strong></td><td>Initiates pipeline execution</td><td>PubSub, Composer, Eventarc</td></tr>
+          <tr><td><strong>Config</strong></td><td>Runtime parameters, mappings, DQ rules</td><td>GCS JSON, BQ tables</td></tr>
+          <tr><td><strong>Factory</strong></td><td>Creates the right pipeline per scenario</td><td>Python / Apache Beam SDK</td></tr>
+          <tr><td><strong>Transforms</strong></td><td>Read, parse, validate, detect, write</td><td>Apache Beam PTransforms</td></tr>
+          <tr><td><strong>Sink</strong></td><td>BigQuery staging writes (INSERT/UPSERT)</td><td>BigQuery Storage Write API</td></tr>
+          <tr><td><strong>Metadata</strong></td><td>Audit trail, DQ results, lineage</td><td>BigQuery ndf_meta dataset</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:12px;color:var(--text)">Key Design Decisions</h3>
+      <div class="callout info" style="margin-bottom:10px"><strong>Schema-Agnostic:</strong> All schemas fetched dynamically from BQ INFORMATION_SCHEMA at runtime. No schema files to maintain.</div>
+      <div class="callout success" style="margin-bottom:10px"><strong>Config-Driven:</strong> Adding a new table requires only a JSON mapping + DQ rules file. Zero code changes.</div>
+      <div class="callout warn" style="margin-bottom:10px"><strong>Single Runtime:</strong> One Dataflow Flex Template handles all three scenarios via the <code>--pipeline_mode</code> flag.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SECTION: FRAMEWORK CORE ═══ -->
+<section class="section" id="framework-core">
+  <div class="section-header">
+    <div class="section-label">Framework Core</div>
+    <div class="section-title">Core Components & Module Architecture</div>
+    <div class="section-subtitle">The internal module design of NDF — each component is independently testable and configurable.</div>
+  </div>
+
+  <div class="arch-grid">
+    <div class="arch-card">
+      <div class="arch-card-name">nexus.factory.PipelineFactory</div>
+      <div class="arch-card-title">Pipeline Factory</div>
+      <div class="arch-card-desc">Entry point. Reads mapping_id + env, resolves all config, constructs and launches the appropriate Beam pipeline.</div>
+      <ul><li>Mode dispatch: BATCH_PUBSUB / SCHEDULED / STREAMING</li><li>Dataflow runner config injection</li><li>Template parameter validation</li></ul>
+    </div>
+    <div class="arch-card green">
+      <div class="arch-card-name">nexus.schema.SchemaRegistry</div>
+      <div class="arch-card-title">Schema Registry</div>
+      <div class="arch-card-desc">Fetches table schema from BQ INFORMATION_SCHEMA. Caches in <code>ndf_meta.schema_cache</code>. Converts to Beam schema + BQ TableSchema.</div>
+      <ul><li>COLUMNS + COLUMN_FIELD_PATHS support</li><li>Nested / RECORD types</li><li>TTL-based cache invalidation</li></ul>
+    </div>
+    <div class="arch-card purple">
+      <div class="arch-card-name">nexus.mapping.TableMappingRegistry</div>
+      <div class="arch-card-title">Table Mapping Registry</div>
+      <div class="arch-card-desc">Loads mapping JSON from GCS. Resolves source → staging table FQN per environment. Supports wildcard table patterns.</div>
+      <ul><li>Multi-env mapping resolution</li><li>Composite delta key support</li><li>Partition column routing</li></ul>
+    </div>
+    <div class="arch-card orange">
+      <div class="arch-card-name">nexus.dq.DQRulesEngine</div>
+      <div class="arch-card-title">DQ Rules Engine</div>
+      <div class="arch-card-desc">Loads JSON rules from GCS path in mapping. Applies rules as Beam DoFn. Routes failed records to dead-letter table, passes valid to delta stage.</div>
+      <ul><li>10 built-in rule types</li><li>Custom SQL rules via BQ</li><li>Row-level + aggregate checks</li><li>DQ result audit logging</li></ul>
+    </div>
+    <div class="arch-card red">
+      <div class="arch-card-name">nexus.delta.DeltaDetector</div>
+      <div class="arch-card-title">Delta Detection Engine</div>
+      <div class="arch-card-desc">Compares incoming records against staging table using delta keys. Computes SHA-256 hash of non-key columns to detect updates. Emits NEW / CHANGED / UNCHANGED tags.</div>
+      <ul><li>SHA-256 content hashing</li><li>BQ streaming read of staging keys</li><li>Watermark management for streams</li></ul>
+    </div>
+    <div class="arch-card teal">
+      <div class="arch-card-name">nexus.config.EnvConfigManager</div>
+      <div class="arch-card-title">Environment Config Manager</div>
+      <div class="arch-card-desc">Resolves all project IDs, GCS buckets, BQ datasets, PubSub subscriptions, worker configs for int / preprod / prod environments.</div>
+      <ul><li>YAML/JSON env configs</li><li>Secret Manager integration</li><li>Worker sizing per env</li></ul>
+    </div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart LR
+    subgraph PIPELINE["Beam Pipeline — Transform Chain"]
+        direction LR
+        R["ReadSource\nDoFn"] --> P["ParseSchema\nDoFn"]
+        P --> DQ["DQValidator\nDoFn"]
+        DQ -->|"pass"| DD["DeltaDetector\nDoFn"]
+        DQ -->|"fail"| DL["DeadLetter\nSink"]
+        DD -->|"NEW"| WI["BQ INSERT\nWrite"]
+        DD -->|"CHANGED"| WU["BQ UPSERT\nWrite"]
+        DD -->|"UNCHANGED"| SK["Skip /\nAudit Only"]
+        WI --> AU["AuditLogger\nDoFn"]
+        WU --> AU
+    end
+    classDef pass fill:#E6F4EA,stroke:#34A853,color:#1A7340
+    classDef fail fill:#FEECEC,stroke:#EA4335,color:#C62828
+    classDef write fill:#E8F0FE,stroke:#1967D2,color:#1967D2
+    classDef audit fill:#FFF3E0,stroke:#FB8C00,color:#E65100
+    class R,P,DQ,DD pass
+    class DL fail
+    class WI,WU write
+    class SK,AU audit
+    </div>
+    <div class="diagram-caption">Fig 2. Internal Apache Beam transform chain — single pipeline for all scenarios. Mode-specific behavior injected via DoFn configuration.</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     SCENARIO 1
+═══════════════════════════════════════ -->
+<section class="section" id="scenario1">
+  <div class="scenario-header s1">
+    <div class="scenario-num">01</div>
+    <div>
+      <div class="scenario-title">PubSub-Triggered Batch Ingestion from GCS</div>
+      <div class="scenario-desc">Event-driven architecture: GCS file arrival triggers PubSub notification → Dataflow job launches → loads file → DQ → delta → staging write</div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-label">Scenario 1</div>
+    <div class="section-title">Architecture & Flow</div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart TB
+    subgraph SOURCE["📁 Data Source Layer"]
+        FILE["Source File\n(CSV/JSON/Avro/Parquet)"]
+        GCS["GCS Landing\nBucket"]
+        FILE -->|upload| GCS
+    end
+
+    subgraph TRIGGER_S1["⚡ Event Trigger Layer"]
+        GCS_NOTIF["GCS Bucket\nNotification"]
+        PUBSUB_T["PubSub Topic\nndf-gcs-arrivals"]
+        PUBSUB_S["PubSub Subscription\nndf-gcs-sub"]
+        CF["Cloud Function\nor Eventarc\nListener"]
+        GCS -->|"objectFinalize\nevent"| GCS_NOTIF
+        GCS_NOTIF --> PUBSUB_T --> PUBSUB_S --> CF
+    end
+
+    subgraph DF_S1["🏭 Dataflow Job — BATCH_PUBSUB Mode"]
+        direction TB
+        PF1["PipelineFactory\nmode=BATCH_PUBSUB"]
+        subgraph BEAM_S1["Apache Beam Transforms"]
+            direction LR
+            R1["ReadGCS\n(Avro/CSV/JSON/Parquet)"]
+            SC1["SchemaRegistry\nResolve BQ Schema"]
+            DQ1["DQValidator\nApply JSON Rules"]
+            DD1["DeltaDetector\nKey + SHA256 compare"]
+            WR1["BQ StorageWrite\nStaging Table"]
+        end
+        PF1 --> BEAM_S1
+    end
+
+    subgraph BQ_S1["💾 BigQuery Staging"]
+        STG1["project.dataset.stg_table"]
+        DLQ1["project.dataset.stg_table_dead_letter"]
+        AUD1["ndf_meta.pipeline_runs"]
+    end
+
+    CF -->|"launch_dataflow()\nmapping_id, gcs_uri"| PF1
+    R1 --> SC1 --> DQ1
+    DQ1 -->|"DQ pass"| DD1
+    DQ1 -->|"DQ fail"| DLQ1
+    DD1 -->|"NEW/CHANGED"| WR1
+    WR1 --> STG1
+    PF1 --> AUD1
+
+    classDef s1node fill:#E8F0FE,stroke:#1967D2,color:#1C2333
+    classDef s1sink fill:#E6F4EA,stroke:#34A853,color:#1A7340
+    classDef s1fail fill:#FEECEC,stroke:#EA4335,color:#C62828
+    class PF1,R1,SC1,DQ1,DD1,WR1 s1node
+    class STG1,AUD1 s1sink
+    class DLQ1 s1fail
+    </div>
+    <div class="diagram-caption">Fig 3. Scenario 1 — PubSub-Triggered Batch from GCS. GCS object finalize event → PubSub → Cloud Function → Dataflow job launch.</div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:12px">Processing Steps</h3>
+      <div class="step-flow s1">
+        <div class="step-item"><div class="step-num">1</div><div class="step-label">GCS File Arrives</div><div class="step-sub">objectFinalize</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-label">PubSub Notified</div><div class="step-sub">Topic message</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-label">Dataflow Launched</div><div class="step-sub">Flex Template</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-label">DQ + Delta</div><div class="step-sub">Validate + diff</div></div>
+        <div class="step-item"><div class="step-num">5</div><div class="step-label">Write Staging</div><div class="step-sub">BQ UPSERT</div></div>
+      </div>
+    </div>
+    <div>
+      <h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:12px">Trigger Message Schema</h3>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div><span class="code-lang">JSON — PubSub Payload</span></div>
+        <pre class="code-content">{
+  <span class="key">"mapping_id"</span>: <span class="str">"MAP_ORDERS_001"</span>,
+  <span class="key">"environment"</span>: <span class="str">"prod"</span>,
+  <span class="key">"gcs_uri"</span>: <span class="str">"gs://ndf-landing-prod/orders/2024-01-15/orders_full.parquet"</span>,
+  <span class="key">"file_format"</span>: <span class="str">"parquet"</span>,
+  <span class="key">"file_size_bytes"</span>: <span class="num">45231890</span>,
+  <span class="key">"arrival_ts"</span>: <span class="str">"2024-01-15T08:23:11Z"</span>,
+  <span class="key">"source_system"</span>: <span class="str">"erp_oracle"</span>,
+  <span class="key">"checksum_md5"</span>: <span class="str">"a3f2b891c4e5d6789012..."</span>,
+  <span class="key">"run_id"</span>: <span class="str">"RUN-20240115-082311-7f3a"</span>
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-family:var(--font-display);font-size:16px;margin:20px 0 12px">Supported File Formats</h3>
+  <table class="data-table">
+    <thead><tr><th>Format</th><th>Reader</th><th>Schema Detection</th><th>Compression</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill pill-blue">Parquet</span></td><td>beam.io.ReadFromParquet</td><td>Auto from file + BQ INFO_SCHEMA override</td><td>snappy, gzip, zstd</td><td>Preferred for large files</td></tr>
+      <tr><td><span class="pill pill-green">Avro</span></td><td>beam.io.ReadFromAvro</td><td>Embedded Avro schema</td><td>deflate, snappy</td><td>Schema evolution supported</td></tr>
+      <tr><td><span class="pill pill-orange">CSV</span></td><td>beam.io.ReadFromText</td><td>BQ INFO_SCHEMA mandatory</td><td>gzip</td><td>Header row skip configured</td></tr>
+      <tr><td><span class="pill pill-purple">JSON (NDJSON)</span></td><td>beam.io.ReadFromText</td><td>BQ INFO_SCHEMA for type cast</td><td>gzip</td><td>One JSON object per line</td></tr>
+      <tr><td><span class="pill pill-gray">ORC</span></td><td>Custom DoFn (PyArrow)</td><td>ORC metadata + BQ override</td><td>zlib, snappy</td><td>Beta support</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════════════════════════════════
+     SCENARIO 2
+═══════════════════════════════════════ -->
+<section class="section" id="scenario2">
+  <div class="scenario-header s2">
+    <div class="scenario-num">02</div>
+    <div>
+      <div class="scenario-title">Composer-Scheduled Daily BQ Delta Sync</div>
+      <div class="scenario-desc">Cloud Composer orchestrates a nightly Dataflow job: reads BQ source table, compares with staging snapshot, writes only changed/new records</div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-label">Scenario 2</div>
+    <div class="section-title">Architecture & Flow</div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart TB
+    subgraph COMP["⏰ Cloud Composer (Airflow 2.x)"]
+        direction LR
+        DAG["ndf_daily_delta_dag\ncron: 0 2 * * *"]
+        T_SENSE["FileSensor /\nTableSensor\nPrecondition"]
+        T_LAUNCH["DataflowStartFlexTemplate\nOperator"]
+        T_WAIT["DataflowJobStatusSensor\nWait for completion"]
+        T_AUDIT["BigQueryInsertJob\nUpdate audit log"]
+        DAG --> T_SENSE --> T_LAUNCH --> T_WAIT --> T_AUDIT
+    end
+
+    subgraph SRC_BQ["📊 Source — BigQuery"]
+        SRC_TBL["src_project.src_dataset\n.source_table"]
+        SRC_PART["Partition filter:\nDATE(created_at)\n= execution_date"]
+    end
+
+    subgraph DF_S2["🏭 Dataflow — SCHEDULED_BATCH Mode"]
+        direction TB
+        PF2["PipelineFactory\nmode=SCHEDULED_BATCH"]
+        subgraph BEAM_S2["Apache Beam Transforms"]
+            direction LR
+            R2["ReadBigQuery\n(BQ Storage Read API)"]
+            SC2["SchemaRegistry\nCompare src vs stg schema"]
+            DQ2["DQValidator\nApply JSON Rules"]
+            DD2["DeltaDetector\nFull outer join strategy"]
+            WR2["BQ StorageWrite\nStaging MERGE"]
+        end
+        PF2 --> BEAM_S2
+    end
+
+    subgraph STG_BQ["💾 Staging — BigQuery"]
+        STG2["stg_project.stg_dataset\n.stg_table"]
+        DLQ2["stg_table_dead_letter"]
+        AUD2["ndf_meta.pipeline_runs\nndf_meta.delta_stats"]
+    end
+
+    T_LAUNCH -->|"flex_template_params:\nmapping_id, execution_date\nenv, run_id"| PF2
+    SRC_TBL --> SRC_PART --> R2
+    R2 --> SC2 --> DQ2
+    DQ2 -->|"pass"| DD2
+    DQ2 -->|"fail"| DLQ2
+    DD2 -->|"NEW rows"| WR2
+    DD2 -->|"CHANGED rows"| WR2
+    WR2 --> STG2
+    PF2 --> AUD2
+
+    classDef s2node fill:#E6F4EA,stroke:#1A7340,color:#1C2333
+    classDef s2comp fill:#FFF8E1,stroke:#F9AB00,color:#5D4037
+    classDef s2fail fill:#FEECEC,stroke:#EA4335,color:#C62828
+    class PF2,R2,SC2,DQ2,DD2,WR2 s2node
+    class DAG,T_SENSE,T_LAUNCH,T_WAIT,T_AUDIT s2comp
+    class DLQ2 s2fail
+    </div>
+    <div class="diagram-caption">Fig 4. Scenario 2 — Composer-Scheduled Daily Batch. Airflow DAG controls pre-conditions, launch, wait, and post-audit. Dataflow uses BQ Storage Read API for high-throughput source table reads.</div>
+  </div>
+
+  <h3 style="font-family:var(--font-display);font-size:16px;margin:20px 0 12px">Composer DAG Configuration</h3>
+  <div class="code-block">
+    <div class="code-header"><div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div><span class="code-lang">Python — Airflow DAG (ndf_daily_delta_dag.py)</span></div>
+    <pre class="code-content"><span class="kw">from</span> airflow <span class="kw">import</span> DAG
+<span class="kw">from</span> airflow.providers.google.cloud.operators.dataflow <span class="kw">import</span> DataflowStartFlexTemplateOperator
+<span class="kw">from</span> airflow.providers.google.cloud.sensors.dataflow <span class="kw">import</span> DataflowJobStatusSensor
+<span class="kw">from</span> airflow.providers.google.cloud.operators.bigquery <span class="kw">import</span> BigQueryInsertJobOperator
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timedelta
+<span class="kw">import</span> uuid
+
+<span class="cls">MAPPING_IDS</span> = [
+    <span class="str">"MAP_ORDERS_001"</span>, <span class="str">"MAP_CUSTOMERS_002"</span>,
+    <span class="str">"MAP_PRODUCTS_003"</span>, <span class="str">"MAP_INVENTORY_004"</span>
+]
+
+<span class="kw">with</span> DAG(
+    dag_id=<span class="str">"ndf_daily_delta_sync"</span>,
+    schedule_interval=<span class="str">"0 2 * * *"</span>,  <span class="cmt"># 2 AM daily</span>
+    start_date=datetime(<span class="num">2024</span>, <span class="num">1</span>, <span class="num">1</span>),
+    catchup=<span class="bool">False</span>,
+    default_args={
+        <span class="str">"retries"</span>: <span class="num">2</span>,
+        <span class="str">"retry_delay"</span>: timedelta(minutes=<span class="num">5</span>),
+        <span class="str">"email_on_failure"</span>: <span class="bool">True</span>,
+        <span class="str">"email"</span>: [<span class="str">"ndf-alerts@company.com"</span>]
+    },
+    tags=[<span class="str">"ndf"</span>, <span class="str">"delta"</span>, <span class="str">"scheduled"</span>],
+) <span class="kw">as</span> dag:
+
+    <span class="kw">for</span> mapping_id <span class="kw">in</span> MAPPING_IDS:
+        run_id = <span class="str">f"RUN-{'{{'</span>ds_nodash<span class="str">'}}'}-{mapping_id}-{uuid.uuid4().hex[:6]}"</span>
+
+        launch = DataflowStartFlexTemplateOperator(
+            task_id=<span class="str">f"launch_{mapping_id}"</span>,
+            project_id=<span class="str">"{{ var.value.ndf_project_id }}"</span>,
+            location=<span class="str">"us-central1"</span>,
+            body={
+                <span class="str">"launchParameter"</span>: {
+                    <span class="str">"jobName"</span>: <span class="str">f"ndf-{mapping_id.lower()}-{{{{ ds_nodash }}}}"</span>,
+                    <span class="str">"containerSpecGcsPath"</span>: <span class="str">"gs://ndf-templates/nexus-flex-template.json"</span>,
+                    <span class="str">"parameters"</span>: {
+                        <span class="str">"pipeline_mode"</span>: <span class="str">"SCHEDULED_BATCH"</span>,
+                        <span class="str">"mapping_id"</span>: mapping_id,
+                        <span class="str">"environment"</span>: <span class="str">"{{ var.value.ndf_environment }}"</span>,
+                        <span class="str">"execution_date"</span>: <span class="str">"{{ ds }}"</span>,
+                        <span class="str">"run_id"</span>: run_id,
+                    }
+                }
+            }
+        )
+
+        wait = DataflowJobStatusSensor(
+            task_id=<span class="str">f"wait_{mapping_id}"</span>,
+            job_id=<span class="str">f"{{{{ task_instance.xcom_pull('{launch.task_id}')['id'] }}}}"</span>,
+            expected_statuses={<span class="str">"JOB_STATE_DONE"</span>},
+            project_id=<span class="str">"{{ var.value.ndf_project_id }}"</span>,
+            location=<span class="str">"us-central1"</span>,
+            poke_interval=<span class="num">60</span>,
+            timeout=<span class="num">7200</span>,
+        )
+
+        launch >> wait</pre>
+  </div>
+
+  <div class="callout success">
+    <strong>Parallelism:</strong> Multiple <code>mapping_id</code>s can run as parallel Dataflow jobs within the same DAG run. Each job is fully independent — separate Dataflow workers, separate BQ write sessions, separate audit rows.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     SCENARIO 3
+═══════════════════════════════════════ -->
+<section class="section" id="scenario3">
+  <div class="scenario-header s3">
+    <div class="scenario-num">03</div>
+    <div>
+      <div class="scenario-title">PubSub Streaming with Sliding Window Processing</div>
+      <div class="scenario-desc">Continuous data ingestion via PubSub — processed in 1-minute sliding windows using Apache Beam's streaming engine with watermarks and allowed lateness</div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-label">Scenario 3</div>
+    <div class="section-title">Architecture & Sliding Window Flow</div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart TB
+    subgraph PROD["📡 Data Producers"]
+        direction LR
+        APP1["Microservice A\nEvent Publisher"]
+        APP2["Microservice B\nCDC Publisher"]
+        IOT["IoT / Sensor\nData"]
+    end
+
+    subgraph PUBSUB["☁️ Google Cloud PubSub"]
+        TOPIC["PubSub Topic\nndf-stream-{table}"]
+        DLQT["Dead Letter Topic\nndf-dlq-{table}"]
+        SUB["PubSub Subscription\nndf-sub-{table}\nack_deadline=120s"]
+        TOPIC --> SUB
+    end
+
+    subgraph DF_S3["🏭 Dataflow Streaming — STREAMING_WINDOW Mode"]
+        direction TB
+        PF3["PipelineFactory\nmode=STREAMING_WINDOW"]
+
+        subgraph WIN["⏱ Sliding Window Engine"]
+            direction LR
+            W1["Window: 1 min\nSize=60s Slide=30s"]
+            W2["Watermark\nmax_lateness=30s"]
+            W3["Trigger:\nAfterWatermark\n+AfterProcessing(10s)"]
+        end
+
+        subgraph BEAM_S3["Apache Beam Streaming Transforms"]
+            direction LR
+            R3["ReadFromPubSub\nwith_attributes"]
+            DEC["Decode\n+ Timestamp\nAssign"]
+            SC3["SchemaRegistry\nResolve"]
+            DQ3["DQValidator\nPer-element"]
+            AGG["WindowAggregate\nDedup within window"]
+            DD3["DeltaDetector\nkey lookup vs staging"]
+            WR3["BQ StorageWrite\nAT_LEAST_ONCE"]
+        end
+
+        PF3 --> WIN
+        PF3 --> BEAM_S3
+    end
+
+    subgraph STG_S3["💾 BigQuery Streaming Sink"]
+        STG3["stg_project.stg_dataset.stg_table\n(partitioned by _ingest_ts)"]
+        DLQ3["stg_table_dead_letter\n(streaming DQ fails)"]
+        AUD3["ndf_meta.streaming_stats\n(window-level metrics)"]
+    end
+
+    APP1 --> TOPIC
+    APP2 --> TOPIC
+    IOT --> TOPIC
+    SUB --> R3
+    R3 --> DEC --> SC3 --> DQ3
+    DQ3 -->|"pass"| AGG
+    DQ3 -->|"fail"| DLQ3
+    AGG -->|"windowed"| DD3
+    DD3 -->|"NEW/CHANGED"| WR3
+    WR3 --> STG3
+    PF3 --> AUD3
+
+    classDef s3node fill:#EDE7F6,stroke:#6200EE,color:#1C2333
+    classDef s3win fill:#F3E5F5,stroke:#9C4DCA,color:#4A148C
+    classDef s3fail fill:#FEECEC,stroke:#EA4335,color:#C62828
+    class PF3,R3,DEC,SC3,DQ3,AGG,DD3,WR3 s3node
+    class W1,W2,W3 s3win
+    class DLQ3 s3fail
+    </div>
+    <div class="diagram-caption">Fig 5. Scenario 3 — PubSub Streaming with Sliding Windows. Beam's streaming engine processes messages in 1-min sliding windows (30s slide). Watermark + allowed lateness handles out-of-order events.</div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:12px">Window Configuration</h3>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div><span class="code-lang">Python — Beam Window Config</span></div>
+        <pre class="code-content"><span class="kw">import</span> apache_beam <span class="kw">as</span> beam
+<span class="kw">from</span> apache_beam <span class="kw">import</span> window
+
+<span class="cmt"># Sliding window: 60s size, 30s slide</span>
+<span class="cmt"># e.g. window [00:00-01:00], [00:30-01:30] ...</span>
+windowed = (
+    messages
+    | <span class="str">"AssignEventTimestamp"</span> >> beam.Map(
+        <span class="kw">lambda</span> x: beam.window.TimestampedValue(
+            x, x[<span class="str">"event_timestamp"</span>]
+        )
+    )
+    | <span class="str">"SlidingWindow"</span> >> beam.WindowInto(
+        window.SlidingWindows(
+            size=<span class="num">60</span>,    <span class="cmt"># 1 minute window</span>
+            period=<span class="num">30</span>   <span class="cmt"># emit every 30 seconds</span>
+        ),
+        trigger=trigger.AfterWatermark(
+            late=trigger.AfterCount(<span class="num">1</span>)
+        ),
+        allowed_lateness=<span class="num">30</span>,
+        accumulation_mode=trigger.AccumulationMode.DISCARDING
+    )
+)</pre>
+      </div>
+    </div>
+    <div>
+      <h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:12px">Stream Message Schema</h3>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div><span class="code-lang">JSON — PubSub Stream Message</span></div>
+        <pre class="code-content">{
+  <span class="key">"mapping_id"</span>: <span class="str">"MAP_ORDERS_STREAM_001"</span>,
+  <span class="key">"event_type"</span>: <span class="str">"INSERT"</span>,  <span class="cmt">// INSERT | UPDATE | DELETE</span>
+  <span class="key">"event_timestamp"</span>: <span class="str">"2024-01-15T08:23:11.453Z"</span>,
+  <span class="key">"source_system"</span>: <span class="str">"order_service_v2"</span>,
+  <span class="key">"payload"</span>: {
+    <span class="key">"order_id"</span>: <span class="str">"ORD-90234"</span>,
+    <span class="key">"customer_id"</span>: <span class="str">"CUST-1023"</span>,
+    <span class="key">"amount"</span>: <span class="num">1250.99</span>,
+    <span class="key">"status"</span>: <span class="str">"confirmed"</span>
+  },
+  <span class="key">"metadata"</span>: {
+    <span class="key">"producer_id"</span>: <span class="str">"order-svc-pod-3a"</span>,
+    <span class="key">"msg_seq"</span>: <span class="num">89234</span>,
+    <span class="key">"schema_version"</span>: <span class="str">"v2.3"</span>
+  }
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout tip">
+    <strong>Deduplication within Window:</strong> Within each sliding window, the <code>WindowAggregate</code> transform groups by delta key and takes the latest record by <code>event_timestamp</code>, ensuring at-most-once semantics per key per window before hitting the DeltaDetector.
+  </div>
+</section>
+
+<!-- ═══ SCHEMA REGISTRY ═══ -->
+<section class="section" id="schema-registry">
+  <div class="section-header">
+    <div class="section-label">Metadata</div>
+    <div class="section-title">Schema Registry — BQ INFORMATION_SCHEMA</div>
+    <div class="section-subtitle">All table schemas are fetched dynamically from BigQuery's INFORMATION_SCHEMA. No static schema files. The registry caches results in <code>ndf_meta.schema_cache</code> with configurable TTL.</div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart LR
+    subgraph RESOLVE["Schema Resolution Flow"]
+        direction TB
+        REQ["SchemaRegistry\n.get_schema(fqn, env)"]
+        CACHE{"Cache\nhit?"}
+        BQ_QUERY["BQ Query:\nINFORMATION_SCHEMA\n.COLUMNS +\n.COLUMN_FIELD_PATHS"]
+        CACHE_WRITE["Write to\nndf_meta.schema_cache\nwith TTL=1h"]
+        OUT["Return:\nBeamSchema +\nBQTableSchema +\nColumnMap"]
+
+        REQ --> CACHE
+        CACHE -->|"hit"| OUT
+        CACHE -->|"miss"| BQ_QUERY --> CACHE_WRITE --> OUT
+    end
+    classDef c1 fill:#E8F0FE,stroke:#1967D2,color:#1C2333
+    class REQ,BQ_QUERY,CACHE_WRITE,OUT c1
+    </div>
+    <div class="diagram-caption">Fig 6. Schema Registry flow. Cache-first approach reduces BQ metadata API calls in repeated pipeline runs.</div>
+  </div>
+
+  <h3 style="font-family:var(--font-display);font-size:16px;margin:20px 0 12px">INFORMATION_SCHEMA Query</h3>
+  <div class="code-block">
+    <div class="code-header"><div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div><span class="code-lang">SQL — Schema Discovery Query</span></div>
+    <pre class="code-content"><span class="cmt">-- Fetch full schema including nested/repeated fields</span>
+<span class="kw">SELECT</span>
+  c.table_catalog,
+  c.table_schema,
+  c.table_name,
+  c.column_name,
+  c.ordinal_position,
+  c.is_nullable,
+  c.data_type,
+  c.is_partitioning_column,
+  c.clustering_ordinal_position,
+  cf.field_path,
+  cf.data_type      <span class="kw">AS</span> nested_data_type,
+  cf.description
+<span class="kw">FROM</span>
+  <span class="cls">`{project}.{dataset}.INFORMATION_SCHEMA.COLUMNS`</span> c
+<span class="kw">LEFT JOIN</span>
+  <span class="cls">`{project}.{dataset}.INFORMATION_SCHEMA.COLUMN_FIELD_PATHS`</span> cf
+    <span class="kw">ON</span> c.table_name = cf.table_name
+    <span class="kw">AND</span> c.column_name = cf.column_name
+<span class="kw">WHERE</span>
+  c.table_name = <span class="str">@table_name</span>
+<span class="kw">ORDER BY</span>
+  c.ordinal_position, cf.field_path</pre>
+  </div>
+
+  <h3 style="font-family:var(--font-display);font-size:16px;margin:20px 0 12px">Schema Cache Table (ndf_meta.schema_cache)</h3>
+  <table class="data-table">
+    <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">cache_key</td><td><span class="pill pill-blue">STRING</span></td><td>MD5(project+dataset+table+env) — partition key</td></tr>
+      <tr><td class="mono">table_fqn</td><td><span class="pill pill-blue">STRING</span></td><td>Fully-qualified table name (project.dataset.table)</td></tr>
+      <tr><td class="mono">environment</td><td><span class="pill pill-blue">STRING</span></td><td>int / preprod / prod</td></tr>
+      <tr><td class="mono">schema_json</td><td><span class="pill pill-orange">JSON</span></td><td>Full BQ TableSchema as JSON string</td></tr>
+      <tr><td class="mono">beam_schema_json</td><td><span class="pill pill-orange">JSON</span></td><td>Serialized Beam schema</td></tr>
+      <tr><td class="mono">column_count</td><td><span class="pill pill-green">INTEGER</span></td><td>Number of top-level columns</td></tr>
+      <tr><td class="mono">has_nested</td><td><span class="pill pill-purple">BOOL</span></td><td>True if RECORD/REPEATED types present</td></tr>
+      <tr><td class="mono">cached_at</td><td><span class="pill pill-gray">TIMESTAMP</span></td><td>Cache population time</td></tr>
+      <tr><td class="mono">expires_at</td><td><span class="pill pill-gray">TIMESTAMP</span></td><td>TTL expiry (default: cached_at + 1 hour)</td></tr>
+      <tr><td class="mono">schema_hash</td><td><span class="pill pill-blue">STRING</span></td><td>SHA-256 of schema_json — drift detection</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <strong>Schema Drift Detection:</strong> On each cache refresh, the new <code>schema_hash</code> is compared to the previous. If drift is detected, an alert is raised via Cloud Monitoring and the pipeline pauses until the mapping owner acknowledges the change.
+  </div>
+</section>
+
+<!-- ═══ TABLE MAPPING ═══ -->
+<section class="section" id="table-mapping">
+  <div class="section-header">
+    <div class="section-label">Configuration</div>
+    <div class="section-title">Table Mapping Registry</div>
+    <div class="section-subtitle">
+      Every source-to-staging relationship is declared in the central mapping registry JSON stored in GCS.
+      A single mapping entry drives all three scenario modes — the <code>scenario_modes</code> field declares which triggers are active.
+    </div>
+  </div>
+
+  <h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:12px">Mapping Registry JSON Schema</h3>
+  <div class="code-block">
+    <div class="code-header"><div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div><span class="code-lang">JSON — gs://ndf-config-{env}/mappings/registry.json</span></div>
+    <pre class="code-content">{
+  <span class="key">"registry_version"</span>: <span class="str">"2.0"</span>,
+  <span class="key">"last_updated"</span>: <span class="str">"2024-01-15T10:00:00Z"</span>,
+  <span class="key">"updated_by"</span>: <span class="str">"ndf-admin@company.com"</span>,
+  <span class="key">"mappings"</span>: [
+    {
+      <span class="key">"mapping_id"</span>: <span class="str">"MAP_ORDERS_001"</span>,
+      <span class="key">"display_name"</span>: <span class="str">"Orders Table — Full Delta Sync"</span>,
+      <span class="key">"enabled"</span>: <span class="bool">true</span>,
+      <span class="key">"scenario_modes"</span>: [<span class="str">"BATCH_PUBSUB"</span>, <span class="str">"SCHEDULED_BATCH"</span>],
+
+      <span class="key">"source"</span>: {
+        <span class="key">"project_ref"</span>: <span class="str">"ENV.source_project"</span>,    <span class="cmt">// resolved per env</span>
+        <span class="key">"dataset"</span>: <span class="str">"raw_data"</span>,
+        <span class="key">"table"</span>: <span class="str">"orders"</span>,
+        <span class="key">"gcs_prefix"</span>: <span class="str">"orders/"</span>,               <span class="cmt">// for BATCH_PUBSUB</span>
+        <span class="key">"file_format"</span>: <span class="str">"parquet"</span>,
+        <span class="key">"partition_filter"</span>: <span class="str">"DATE(created_at) = @execution_date"</span>
+      },
+
+      <span class="key">"staging"</span>: {
+        <span class="key">"project_ref"</span>: <span class="str">"ENV.staging_project"</span>,
+        <span class="key">"dataset"</span>: <span class="str">"staging"</span>,
+        <span class="key">"table"</span>: <span class="str">"stg_orders"</span>,
+        <span class="key">"partition_column"</span>: <span class="str">"_partition_date"</span>,
+        <span class="key">"partition_type"</span>: <span class="str">"DAY"</span>,
+        <span class="key">"clustering_fields"</span>: [<span class="str">"customer_id"</span>, <span class="str">"status"</span>],
+        <span class="key">"write_mode"</span>: <span class="str">"UPSERT"</span>             <span class="cmt">// UPSERT | APPEND | REPLACE</span>
+      },
+
+      <span class="key">"delta_keys"</span>: [<span class="str">"order_id"</span>],          <span class="cmt">// composite: ["order_id","line_id"]</span>
+      <span class="key">"hash_columns"</span>: <span class="str">"__all_non_key__"</span>,     <span class="cmt">// or list of specific columns</span>
+      <span class="key">"exclude_from_hash"</span>: [<span class="str">"updated_at"</span>, <span class="str">"_ingest_ts"</span>],
+
+      <span class="key">"dq_rules_path"</span>: <span class="str">"gs://ndf-config-{env}/dq_rules/orders_dq.json"</span>,
+      <span class="key">"dq_fail_strategy"</span>: <span class="str">"QUARANTINE"</span>,    <span class="cmt">// QUARANTINE | FAIL_JOB | WARN</span>
+      <span class="key">"dq_fail_threshold_pct"</span>: <span class="num">5</span>,
+
+      <span class="key">"watermark_column"</span>: <span class="str">"updated_at"</span>,
+      <span class="key">"watermark_table"</span>: <span class="str">"ndf_meta.watermarks"</span>,
+
+      <span class="key">"metadata_columns"</span>: {
+        <span class="key">"add_ingest_ts"</span>: <span class="bool">true</span>,             <span class="cmt">// adds _ingest_ts TIMESTAMP</span>
+        <span class="key">"add_run_id"</span>: <span class="bool">true</span>,               <span class="cmt">// adds _run_id STRING</span>
+        <span class="key">"add_source_file"</span>: <span class="bool">true</span>,           <span class="cmt">// adds _source_file STRING</span>
+        <span class="key">"add_delta_action"</span>: <span class="bool">true</span>           <span class="cmt">// adds _delta_action: NEW|CHANGED</span>
+      },
+
+      <span class="key">"streaming_config"</span>: {                 <span class="cmt">// only for STREAMING_WINDOW mode</span>
+        <span class="key">"pubsub_subscription"</span>: <span class="str">"ndf-orders-stream-sub"</span>,
+        <span class="key">"window_size_seconds"</span>: <span class="num">60</span>,
+        <span class="key">"window_period_seconds"</span>: <span class="num">30</span>,
+        <span class="key">"allowed_lateness_seconds"</span>: <span class="num">30</span>,
+        <span class="key">"dedup_within_window"</span>: <span class="bool">true</span>
+      }
+    }
+  ]
+}</pre>
+  </div>
+
+  <h3 style="font-family:var(--font-display);font-size:16px;margin:20px 0 12px">Mapping Field Reference</h3>
+  <table class="data-table">
+    <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">mapping_id</td><td>STRING</td><td><span class="pill pill-red">Required</span></td><td>Unique identifier, used in all trigger payloads and Composer params</td></tr>
+      <tr><td class="mono">scenario_modes</td><td>STRING[]</td><td><span class="pill pill-red">Required</span></td><td>BATCH_PUBSUB, SCHEDULED_BATCH, STREAMING_WINDOW</td></tr>
+      <tr><td class="mono">delta_keys</td><td>STRING[]</td><td><span class="pill pill-red">Required</span></td><td>Composite primary key for delta detection. Must match BQ PK semantics.</td></tr>
+      <tr><td class="mono">hash_columns</td><td>STRING[]|"__all_non_key__"</td><td><span class="pill pill-orange">Recommended</span></td><td>Columns included in SHA-256 hash for change detection</td></tr>
+      <tr><td class="mono">dq_rules_path</td><td>STRING</td><td><span class="pill pill-orange">Recommended</span></td><td>GCS path to DQ rules JSON. <code>{env}</code> is substituted at runtime.</td></tr>
+      <tr><td class="mono">partition_filter</td><td>STRING</td><td><span class="pill pill-gray">Optional</span></td><td>BQ parameterized query filter for Scenario 2 source reads</td></tr>
+      <tr><td class="mono">watermark_column</td><td>STRING</td><td><span class="pill pill-gray">Optional</span></td><td>Column used for watermark-based incremental reads</td></tr>
+      <tr><td class="mono">exclude_from_hash</td><td>STRING[]</td><td><span class="pill pill-gray">Optional</span></td><td>Columns excluded from SHA-256 (audit fields, timestamps that always change)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══ DQ RULES ENGINE ═══ -->
+<section class="section" id="dq-engine">
+  <div class="section-header">
+    <div class="section-label">Data Quality</div>
+    <div class="section-title">DQ Rules Engine — JSON Configuration</div>
+    <div class="section-subtitle">
+      Each table has its own DQ rules JSON file stored in GCS. Rules are loaded at pipeline startup, compiled into a Beam <code>DQValidatorDoFn</code>, and applied per-element.
+      Aggregate rules (row count, distribution) run as post-window checks.
+    </div>
+  </div>
+
+  <h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:14px">DQ Rule Types</h3>
+
+  <div class="dq-rule-card">
+    <div class="dq-rule-icon" style="background:#E8F0FE"><span style="color:var(--blue)">🚫</span></div>
+    <div><div class="dq-rule-name">NOT_NULL <span class="badge badge-core">Row-Level</span></div><div class="dq-rule-desc">Checks that specified columns are not NULL or empty string.</div><div class="dq-rule-meta">Config: <code>columns</code> (list), <code>treat_empty_as_null</code> (bool)</div></div>
+  </div>
+  <div class="dq-rule-card">
+    <div class="dq-rule-icon" style="background:#E6F4EA"><span style="color:var(--green)">🔑</span></div>
+    <div><div class="dq-rule-name">UNIQUENESS <span class="badge badge-core">Row-Level</span></div><div class="dq-rule-desc">Validates uniqueness of a column or composite key set within the batch/window.</div><div class="dq-rule-meta">Config: <code>columns</code> (list), <code>scope</code>: BATCH | WINDOW | GLOBAL</div></div>
+  </div>
+  <div class="dq-rule-card">
+    <div class="dq-rule-icon" style="background:#FFF3E0"><span style="color:var(--orange)">📏</span></div>
+    <div><div class="dq-rule-name">RANGE <span class="badge badge-core">Row-Level</span></div><div class="dq-rule-desc">Validates numeric, date, or string length falls within min/max bounds.</div><div class="dq-rule-meta">Config: <code>column</code>, <code>min</code>, <code>max</code>, <code>inclusive</code> (bool), <code>data_type</code>: NUMERIC|DATE|STRING_LEN</div></div>
+  </div>
+  <div class="dq-rule-card">
+    <div class="dq-rule-icon" style="background:#EDE7F6"><span style="color:var(--purple)">🔤</span></div>
+    <div><div class="dq-rule-name">REGEX_PATTERN <span class="badge badge-core">Row-Level</span></div><div class="dq-rule-desc">Validates column values match a given regular expression.</div><div class="dq-rule-meta">Config: <code>column</code>, <code>pattern</code> (regex string), <code>error_msg</code></div></div>
+  </div>
+  <div class="dq-rule-card">
+    <div class="dq-rule-icon" style="background:#FEECEC"><span style="color:var(--red)">🔗</span></div>
+    <div><div class="dq-rule-name">REFERENTIAL_INTEGRITY <span class="badge badge-ext">Cross-table</span></div><div class="dq-rule-desc">Checks that FK values in this table exist in a referenced BQ table.</div><div class="dq-rule-meta">Config: <code>column</code>, <code>ref_table</code> (BQ FQN), <code>ref_column</code>, <code>ignore_nulls</code></div></div>
+  </div>
+  <div class="dq-rule-card">
+    <div class="dq-rule-icon" style="background:#E8F5E9"><span style="color:#2E7D32">📊</span></div>
+    <div><div class="dq-rule-name">ROW_COUNT_THRESHOLD <span class="badge badge-ext">Aggregate</span></div><div class="dq-rule-desc">Validates batch row count is within expected min/max range (detects empty loads or data explosions).</div><div class="dq-rule-meta">Config: <code>min_rows</code>, <code>max_rows</code>, <code>expected_rows</code> (optional)</div></div>
+  </div>
+  <div class="dq-rule-card">
+    <div class="dq-rule-icon" style="background:#FFF8E1"><span style="color:#F57F17">⏰</span></div>
+    <div><div class="dq-rule-name">FRESHNESS_CHECK <span class="badge badge-ext">Aggregate</span></div><div class="dq-rule-desc">Validates the MAX value of a timestamp column is not older than the configured threshold.</div><div class="dq-rule-meta">Config: <code>column</code>, <code>max_age_hours</code>, <code>severity</code>: WARN | ERROR</div></div>
+  </div>
+  <div class="dq-rule-card">
+    <div class="dq-rule-icon" style="background:#E8EAF6"><span style="color:#3949AB">📋</span></div>
+    <div><div class="dq-rule-name">ALLOWED_VALUES <span class="badge badge-core">Row-Level</span></div><div class="dq-rule-desc">Validates column value is in a predefined set (enum validation).</div><div class="dq-rule-meta">Config: <code>column</code>, <code>allowed</code> (list), <code>case_sensitive</code></div></div>
+  </div>
+  <div class="dq-rule-card">
+    <div class="dq-rule-icon" style="background:#F3E5F5"><span style="color:#7B1FA2">🧮</span></div>
+    <div><div class="dq-rule-name">CUSTOM_SQL <span class="badge badge-ext">Aggregate</span></div><div class="dq-rule-desc">Executes a parameterized BQ SQL expression against a temp staging of the batch. Full SQL flexibility.</div><div class="dq-rule-meta">Config: <code>sql</code> (BigQuery SQL, @batch_table param injected), <code>expected_result</code></div></div>
+  </div>
+  <div class="dq-rule-card">
+    <div class="dq-rule-icon" style="background:#E0F7FA"><span style="color:#00838F">📈</span></div>
+    <div><div class="dq-rule-name">STATISTICAL_DISTRIBUTION <span class="badge badge-ext">Aggregate</span></div><div class="dq-rule-desc">Compares column mean/stddev/percentiles against historical baseline (stored in ndf_meta). Detects anomalies.</div><div class="dq-rule-meta">Config: <code>column</code>, <code>z_score_threshold</code>, <code>baseline_window_days</code></div></div>
+  </div>
+
+  <h3 style="font-family:var(--font-display);font-size:16px;margin:24px 0 12px">Sample DQ Rules JSON — Orders Table</h3>
+  <div class="code-block">
+    <div class="code-header"><div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div><span class="code-lang">JSON — gs://ndf-config-{env}/dq_rules/orders_dq.json</span></div>
+    <pre class="code-content">{
+  <span class="key">"table_ref"</span>: <span class="str">"orders"</span>,
+  <span class="key">"dq_version"</span>: <span class="str">"1.4"</span>,
+  <span class="key">"fail_fast"</span>: <span class="bool">false</span>,
+  <span class="key">"rules"</span>: [
+    {
+      <span class="key">"rule_id"</span>: <span class="str">"R-001"</span>,
+      <span class="key">"name"</span>: <span class="str">"OrderID Must Not Be Null"</span>,
+      <span class="key">"type"</span>: <span class="str">"NOT_NULL"</span>,
+      <span class="key">"severity"</span>: <span class="str">"ERROR"</span>,
+      <span class="key">"columns"</span>: [<span class="str">"order_id"</span>, <span class="str">"customer_id"</span>],
+      <span class="key">"treat_empty_as_null"</span>: <span class="bool">true</span>
+    },
+    {
+      <span class="key">"rule_id"</span>: <span class="str">"R-002"</span>,
+      <span class="key">"name"</span>: <span class="str">"OrderID Uniqueness"</span>,
+      <span class="key">"type"</span>: <span class="str">"UNIQUENESS"</span>,
+      <span class="key">"severity"</span>: <span class="str">"ERROR"</span>,
+      <span class="key">"columns"</span>: [<span class="str">"order_id"</span>],
+      <span class="key">"scope"</span>: <span class="str">"BATCH"</span>
+    },
+    {
+      <span class="key">"rule_id"</span>: <span class="str">"R-003"</span>,
+      <span class="key">"name"</span>: <span class="str">"Amount Range Check"</span>,
+      <span class="key">"type"</span>: <span class="str">"RANGE"</span>,
+      <span class="key">"severity"</span>: <span class="str">"ERROR"</span>,
+      <span class="key">"column"</span>: <span class="str">"amount"</span>,
+      <span class="key">"min"</span>: <span class="num">0.01</span>,
+      <span class="key">"max"</span>: <span class="num">9999999.99</span>,
+      <span class="key">"data_type"</span>: <span class="str">"NUMERIC"</span>
+    },
+    {
+      <span class="key">"rule_id"</span>: <span class="str">"R-004"</span>,
+      <span class="key">"name"</span>: <span class="str">"Status Allowed Values"</span>,
+      <span class="key">"type"</span>: <span class="str">"ALLOWED_VALUES"</span>,
+      <span class="key">"severity"</span>: <span class="str">"WARN"</span>,
+      <span class="key">"column"</span>: <span class="str">"status"</span>,
+      <span class="key">"allowed"</span>: [<span class="str">"pending"</span>, <span class="str">"confirmed"</span>, <span class="str">"shipped"</span>, <span class="str">"cancelled"</span>, <span class="str">"returned"</span>],
+      <span class="key">"case_sensitive"</span>: <span class="bool">false</span>
+    },
+    {
+      <span class="key">"rule_id"</span>: <span class="str">"R-005"</span>,
+      <span class="key">"name"</span>: <span class="str">"Customer FK Check"</span>,
+      <span class="key">"type"</span>: <span class="str">"REFERENTIAL_INTEGRITY"</span>,
+      <span class="key">"severity"</span>: <span class="str">"WARN"</span>,
+      <span class="key">"column"</span>: <span class="str">"customer_id"</span>,
+      <span class="key">"ref_table"</span>: <span class="str">"ENV.staging_project.staging.stg_customers"</span>,
+      <span class="key">"ref_column"</span>: <span class="str">"customer_id"</span>,
+      <span class="key">"ignore_nulls"</span>: <span class="bool">true</span>
+    },
+    {
+      <span class="key">"rule_id"</span>: <span class="str">"R-006"</span>,
+      <span class="key">"name"</span>: <span class="str">"Row Count Guard"</span>,
+      <span class="key">"type"</span>: <span class="str">"ROW_COUNT_THRESHOLD"</span>,
+      <span class="key">"severity"</span>: <span class="str">"ERROR"</span>,
+      <span class="key">"min_rows"</span>: <span class="num">1</span>,
+      <span class="key">"max_rows"</span>: <span class="num">10000000</span>
+    },
+    {
+      <span class="key">"rule_id"</span>: <span class="str">"R-007"</span>,
+      <span class="key">"name"</span>: <span class="str">"Data Freshness"</span>,
+      <span class="key">"type"</span>: <span class="str">"FRESHNESS_CHECK"</span>,
+      <span class="key">"severity"</span>: <span class="str">"WARN"</span>,
+      <span class="key">"column"</span>: <span class="str">"updated_at"</span>,
+      <span class="key">"max_age_hours"</span>: <span class="num">26</span>
+    }
+  ],
+  <span class="key">"fail_threshold_pct"</span>: <span class="num">5</span>,
+  <span class="key">"quarantine_table"</span>: <span class="str">"staging.stg_orders_dead_letter"</span>,
+  <span class="key">"alert_on_fail"</span>: <span class="bool">true</span>,
+  <span class="key">"alert_channel"</span>: <span class="str">"projects/{project}/notificationChannels/ndf-dq-alerts"</span>
+}</pre>
+  </div>
+</section>
+
+<!-- ═══ DELTA DETECTION ═══ -->
+<section class="section" id="delta-engine">
+  <div class="section-header">
+    <div class="section-label">Delta Detection</div>
+    <div class="section-title">Delta Detection Engine</div>
+    <div class="section-subtitle">
+      NDF uses a SHA-256 content hash strategy combined with key-based lookup against the staging table.
+      This is faster than full row comparison and works for any number of columns without code changes.
+    </div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart LR
+    subgraph DELTA["Delta Detection Logic"]
+        IN["Incoming Record\n{key, data_cols}"]
+        HASH["Compute SHA-256\nhash(non-key cols\nexcl. excluded_cols)"]
+        LOOKUP["BQ Lookup\nstaging[key]\n→ existing_hash"]
+        COMPARE{"Hash\nMatch?"}
+        EXISTS{"Key\nExists?"}
+        NEW["Tag: NEW\nAction: INSERT"]
+        CHANGED["Tag: CHANGED\nAction: UPSERT"]
+        UNCHANGED["Tag: UNCHANGED\nSkip (optionally log)"]
+
+        IN --> HASH --> LOOKUP
+        LOOKUP --> EXISTS
+        EXISTS -->|"No"| NEW
+        EXISTS -->|"Yes"| COMPARE
+        COMPARE -->|"No match"| CHANGED
+        COMPARE -->|"Match"| UNCHANGED
+    end
+    classDef ins fill:#E6F4EA,stroke:#34A853,color:#1A7340
+    classDef upd fill:#E8F0FE,stroke:#1967D2,color:#1967D2
+    classDef skip fill:#F1F3F4,stroke:#9AA0A6,color:#5F6368
+    class NEW ins
+    class CHANGED upd
+    class UNCHANGED skip
+    </div>
+    <div class="diagram-caption">Fig 7. Delta Detection logic. SHA-256 hash comparison avoids full column-level diffing. Works for any schema width.</div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:12px">Hash Computation</h3>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div><span class="code-lang">Python — Hash Logic</span></div>
+        <pre class="code-content"><span class="kw">import</span> hashlib, json
+
+<span class="kw">def</span> <span class="fn">compute_row_hash</span>(
+    record: dict,
+    delta_keys: list,
+    exclude_cols: list
+) -> str:
+    <span class="cmt"># Remove key columns + excluded</span>
+    non_key = {
+        k: v <span class="kw">for</span> k, v <span class="kw">in</span> record.items()
+        <span class="kw">if</span> k <span class="kw">not in</span> delta_keys
+        <span class="kw">and</span> k <span class="kw">not in</span> exclude_cols
+    }
+    <span class="cmt"># Deterministic serialization</span>
+    serialized = json.dumps(
+        non_key,
+        sort_keys=<span class="bool">True</span>,
+        default=str  <span class="cmt"># handles datetime, Decimal</span>
+    ).encode(<span class="str">"utf-8"</span>)
+    <span class="kw">return</span> hashlib.sha256(serialized).hexdigest()
+
+<span class="kw">def</span> <span class="fn">build_composite_key</span>(
+    record: dict,
+    delta_keys: list
+) -> str:
+    <span class="kw">return</span> <span class="str">"||"</span>.join(
+        str(record[k]) <span class="kw">for</span> k <span class="kw">in</span> sorted(delta_keys)
+    )</pre>
+      </div>
+    </div>
+    <div>
+      <h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:12px">Staging Table Metadata Columns</h3>
+      <table class="data-table">
+        <thead><tr><th>Column</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">_ndf_hash</td><td>STRING</td><td>SHA-256 of non-key columns</td></tr>
+          <tr><td class="mono">_ndf_ingest_ts</td><td>TIMESTAMP</td><td>When record was written to staging</td></tr>
+          <tr><td class="mono">_ndf_run_id</td><td>STRING</td><td>Pipeline run ID that wrote this row</td></tr>
+          <tr><td class="mono">_ndf_delta_action</td><td>STRING</td><td>NEW | CHANGED | BACKFILL</td></tr>
+          <tr><td class="mono">_ndf_source_file</td><td>STRING</td><td>GCS URI (Scenario 1 only)</td></tr>
+          <tr><td class="mono">_ndf_window_start</td><td>TIMESTAMP</td><td>Window start (Scenario 3 only)</td></tr>
+          <tr><td class="mono">_ndf_window_end</td><td>TIMESTAMP</td><td>Window end (Scenario 3 only)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>Staging Table MERGE Pattern (Scenario 2):</strong> For scheduled batch, the delta detector loads the full set of staging keys + hashes into a Beam-side-input dictionary before processing source records. This avoids per-record BQ lookups and runs at Beam batch speed.
+  </div>
+</section>
+
+<!-- ═══ ENVIRONMENTS ═══ -->
+<section class="section" id="environments">
+  <div class="section-header">
+    <div class="section-label">Environments</div>
+    <div class="section-title">Environment Configuration — INT / PREPROD / PROD</div>
+    <div class="section-subtitle">
+      All environment-specific values (project IDs, worker sizes, GCS buckets, subscriptions) are centralized per environment.
+      The mapping registry uses <code>ENV.*</code> variable references that are substituted at runtime.
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div><span class="code-lang">JSON — gs://ndf-config-{env}/environments/{env}.json</span></div>
+    <pre class="code-content">{
+  <span class="cmt">// ── INT (Integration Testing) ─────────────────────────────────────</span>
+  <span class="key">"int"</span>: {
+    <span class="key">"environment"</span>: <span class="str">"int"</span>,
+    <span class="key">"source_project"</span>: <span class="str">"my-company-int"</span>,
+    <span class="key">"staging_project"</span>: <span class="str">"my-company-int"</span>,
+    <span class="key">"ndf_meta_project"</span>: <span class="str">"my-company-int"</span>,
+    <span class="key">"ndf_meta_dataset"</span>: <span class="str">"ndf_meta_int"</span>,
+    <span class="key">"gcs_config_bucket"</span>: <span class="str">"ndf-config-int"</span>,
+    <span class="key">"gcs_landing_bucket"</span>: <span class="str">"ndf-landing-int"</span>,
+    <span class="key">"gcs_temp_bucket"</span>: <span class="str">"ndf-temp-int"</span>,
+    <span class="key">"bq_location"</span>: <span class="str">"US"</span>,
+    <span class="key">"dataflow_region"</span>: <span class="str">"us-central1"</span>,
+    <span class="key">"dataflow_subnetwork"</span>: <span class="str">"regions/us-central1/subnetworks/ndf-int-subnet"</span>,
+    <span class="key">"worker_machine_type"</span>: <span class="str">"n1-standard-4"</span>,
+    <span class="key">"max_workers"</span>: <span class="num">10</span>,
+    <span class="key">"num_workers"</span>: <span class="num">2</span>,
+    <span class="key">"use_public_ips"</span>: <span class="bool">false</span>,
+    <span class="key">"service_account"</span>: <span class="str">"ndf-worker-int@my-company-int.iam.gserviceaccount.com"</span>,
+    <span class="key">"kms_key"</span>: <span class="str">null</span>,
+    <span class="key">"secret_manager_prefix"</span>: <span class="str">"projects/my-company-int/secrets/ndf"</span>
+  },
+
+  <span class="cmt">// ── PREPROD ───────────────────────────────────────────────────────</span>
+  <span class="key">"preprod"</span>: {
+    <span class="key">"environment"</span>: <span class="str">"preprod"</span>,
+    <span class="key">"source_project"</span>: <span class="str">"my-company-preprod"</span>,
+    <span class="key">"staging_project"</span>: <span class="str">"my-company-preprod"</span>,
+    <span class="key">"ndf_meta_project"</span>: <span class="str">"my-company-preprod"</span>,
+    <span class="key">"ndf_meta_dataset"</span>: <span class="str">"ndf_meta_preprod"</span>,
+    <span class="key">"gcs_config_bucket"</span>: <span class="str">"ndf-config-preprod"</span>,
+    <span class="key">"gcs_landing_bucket"</span>: <span class="str">"ndf-landing-preprod"</span>,
+    <span class="key">"gcs_temp_bucket"</span>: <span class="str">"ndf-temp-preprod"</span>,
+    <span class="key">"bq_location"</span>: <span class="str">"US"</span>,
+    <span class="key">"dataflow_region"</span>: <span class="str">"us-central1"</span>,
+    <span class="key">"dataflow_subnetwork"</span>: <span class="str">"regions/us-central1/subnetworks/ndf-preprod-subnet"</span>,
+    <span class="key">"worker_machine_type"</span>: <span class="str">"n1-standard-8"</span>,
+    <span class="key">"max_workers"</span>: <span class="num">30</span>,
+    <span class="key">"num_workers"</span>: <span class="num">5</span>,
+    <span class="key">"use_public_ips"</span>: <span class="bool">false</span>,
+    <span class="key">"service_account"</span>: <span class="str">"ndf-worker-preprod@my-company-preprod.iam.gserviceaccount.com"</span>,
+    <span class="key">"kms_key"</span>: <span class="str">"projects/my-company-preprod/locations/us-central1/keyRings/ndf/cryptoKeys/ndf-key"</span>,
+    <span class="key">"secret_manager_prefix"</span>: <span class="str">"projects/my-company-preprod/secrets/ndf"</span>
+  },
+
+  <span class="cmt">// ── PROD ──────────────────────────────────────────────────────────</span>
+  <span class="key">"prod"</span>: {
+    <span class="key">"environment"</span>: <span class="str">"prod"</span>,
+    <span class="key">"source_project"</span>: <span class="str">"my-company-prod"</span>,
+    <span class="key">"staging_project"</span>: <span class="str">"my-company-prod"</span>,
+    <span class="key">"ndf_meta_project"</span>: <span class="str">"my-company-prod"</span>,
+    <span class="key">"ndf_meta_dataset"</span>: <span class="str">"ndf_meta_prod"</span>,
+    <span class="key">"gcs_config_bucket"</span>: <span class="str">"ndf-config-prod"</span>,
+    <span class="key">"gcs_landing_bucket"</span>: <span class="str">"ndf-landing-prod"</span>,
+    <span class="key">"gcs_temp_bucket"</span>: <span class="str">"ndf-temp-prod"</span>,
+    <span class="key">"bq_location"</span>: <span class="str">"US"</span>,
+    <span class="key">"dataflow_region"</span>: <span class="str">"us-central1"</span>,
+    <span class="key">"dataflow_subnetwork"</span>: <span class="str">"regions/us-central1/subnetworks/ndf-prod-subnet"</span>,
+    <span class="key">"worker_machine_type"</span>: <span class="str">"n1-standard-16"</span>,
+    <span class="key">"max_workers"</span>: <span class="num">100</span>,
+    <span class="key">"num_workers"</span>: <span class="num">10</span>,
+    <span class="key">"use_public_ips"</span>: <span class="bool">false</span>,
+    <span class="key">"service_account"</span>: <span class="str">"ndf-worker-prod@my-company-prod.iam.gserviceaccount.com"</span>,
+    <span class="key">"kms_key"</span>: <span class="str">"projects/my-company-prod/locations/us-central1/keyRings/ndf/cryptoKeys/ndf-key"</span>,
+    <span class="key">"secret_manager_prefix"</span>: <span class="str">"projects/my-company-prod/secrets/ndf"</span>
+  }
+}</pre>
+  </div>
+
+  <h3 style="font-family:var(--font-display);font-size:16px;margin:20px 0 12px">Environment Comparison</h3>
+  <table class="data-table">
+    <thead><tr><th>Setting</th><th><span class="pill pill-blue">INT</span></th><th><span class="pill pill-orange">PREPROD</span></th><th><span class="pill pill-green">PROD</span></th></tr></thead>
+    <tbody>
+      <tr><td>Worker Type</td><td>n1-standard-4</td><td>n1-standard-8</td><td>n1-standard-16</td></tr>
+      <tr><td>Max Workers</td><td>10</td><td>30</td><td>100</td></tr>
+      <tr><td>Initial Workers</td><td>2</td><td>5</td><td>10</td></tr>
+      <tr><td>KMS Encryption</td><td>❌ None</td><td>✅ CMEK</td><td>✅ CMEK</td></tr>
+      <tr><td>Public IPs</td><td>✅ Optional</td><td>❌ No</td><td>❌ No</td></tr>
+      <tr><td>DQ Fail Strategy</td><td>WARN</td><td>QUARANTINE</td><td>QUARANTINE / FAIL_JOB</td></tr>
+      <tr><td>Alerting</td><td>Email only</td><td>Email + PagerDuty</td><td>Email + PagerDuty + Slack</td></tr>
+      <tr><td>Data Retention</td><td>7 days</td><td>30 days</td><td>365 days (BQ partitioned)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══ METADATA BQ ═══ -->
+<section class="section" id="metadata-bq">
+  <div class="section-header">
+    <div class="section-label">Metadata</div>
+    <div class="section-title">NDF Metadata Dataset — BigQuery</div>
+    <div class="section-subtitle">
+      All framework metadata (run history, DQ results, delta stats, schema cache, watermarks) is stored in the <code>ndf_meta</code> BigQuery dataset. This enables full operational observability via BQ SQL.
+    </div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="mermaid">
+erDiagram
+    pipeline_runs {
+        STRING run_id PK
+        STRING mapping_id FK
+        STRING pipeline_mode
+        STRING environment
+        TIMESTAMP start_ts
+        TIMESTAMP end_ts
+        STRING status
+        INTEGER records_read
+        INTEGER records_inserted
+        INTEGER records_updated
+        INTEGER records_skipped
+        INTEGER dq_failed_rows
+        STRING dataflow_job_id
+        STRING error_message
+    }
+    dq_results {
+        STRING dq_result_id PK
+        STRING run_id FK
+        STRING rule_id
+        STRING rule_type
+        INTEGER records_checked
+        INTEGER records_failed
+        FLOAT fail_pct
+        STRING severity
+        STRING status
+        TIMESTAMP evaluated_at
+    }
+    delta_stats {
+        STRING stat_id PK
+        STRING run_id FK
+        STRING mapping_id FK
+        INTEGER new_records
+        INTEGER changed_records
+        INTEGER unchanged_records
+        STRING delta_method
+        TIMESTAMP computed_at
+    }
+    schema_cache {
+        STRING cache_key PK
+        STRING table_fqn
+        STRING environment
+        JSON schema_json
+        STRING schema_hash
+        TIMESTAMP cached_at
+        TIMESTAMP expires_at
+    }
+    watermarks {
+        STRING watermark_id PK
+        STRING mapping_id FK
+        STRING environment
+        TIMESTAMP last_watermark
+        STRING watermark_column
+        STRING run_id FK
+        TIMESTAMP updated_at
+    }
+    pipeline_runs ||--o{ dq_results : "has"
+    pipeline_runs ||--o{ delta_stats : "has"
+    pipeline_runs ||--o{ watermarks : "updates"
+    </div>
+    <div class="diagram-caption">Fig 8. NDF Metadata schema — BigQuery ndf_meta dataset. Full lineage from every run, DQ evaluation, and delta detection operation.</div>
+  </div>
+</section>
+
+<!-- ═══ PIPELINE FACTORY ═══ -->
+<section class="section" id="pipeline-factory">
+  <div class="section-header">
+    <div class="section-label">Core</div>
+    <div class="section-title">Pipeline Factory — Flex Template Entry Point</div>
+    <div class="section-subtitle">The Pipeline Factory is the single Dataflow Flex Template entry point. It reads the pipeline mode from job parameters and constructs the appropriate Beam pipeline graph.</div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div><span class="code-lang">Python — nexus/factory.py (Pipeline Factory)</span></div>
+    <pre class="code-content"><span class="kw">import</span> apache_beam <span class="kw">as</span> beam
+<span class="kw">from</span> apache_beam.options.pipeline_options <span class="kw">import</span> PipelineOptions
+<span class="kw">from</span> nexus.config <span class="kw">import</span> EnvConfigManager
+<span class="kw">from</span> nexus.mapping <span class="kw">import</span> TableMappingRegistry
+<span class="kw">from</span> nexus.schema <span class="kw">import</span> SchemaRegistry
+<span class="kw">from</span> nexus.transforms <span class="kw">import</span> (
+    ReadGCSTransform, ReadBQTransform, ReadPubSubTransform,
+    ParseSchemaTransform, DQValidatorTransform,
+    DeltaDetectorTransform, StagingWriteTransform,
+    AuditLoggerTransform
+)
+
+
+<span class="kw">class</span> <span class="cls">NexusPipelineOptions</span>(PipelineOptions):
+    @classmethod
+    <span class="kw">def</span> <span class="fn">_add_argparse_args</span>(cls, parser):
+        parser.add_argument(<span class="str">"--pipeline_mode"</span>,
+            choices=[<span class="str">"BATCH_PUBSUB"</span>, <span class="str">"SCHEDULED_BATCH"</span>, <span class="str">"STREAMING_WINDOW"</span>])
+        parser.add_argument(<span class="str">"--mapping_id"</span>)
+        parser.add_argument(<span class="str">"--environment"</span>, choices=[<span class="str">"int"</span>, <span class="str">"preprod"</span>, <span class="str">"prod"</span>])
+        parser.add_argument(<span class="str">"--run_id"</span>)
+        parser.add_argument(<span class="str">"--execution_date"</span>, default=<span class="bool">None</span>)
+        parser.add_argument(<span class="str">"--gcs_uri"</span>, default=<span class="bool">None</span>)
+
+
+<span class="kw">class</span> <span class="cls">PipelineFactory</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, opts: NexusPipelineOptions):
+        self.opts = opts
+        self.env_cfg = EnvConfigManager(opts.environment)
+        self.mapping = TableMappingRegistry(self.env_cfg).get(opts.mapping_id)
+        self.schema = SchemaRegistry(self.env_cfg).get_schema(
+            self.mapping.source_table_fqn
+        )
+
+    <span class="kw">def</span> <span class="fn">build_and_run</span>(self):
+        <span class="kw">if</span> self.opts.pipeline_mode == <span class="str">"BATCH_PUBSUB"</span>:
+            <span class="kw">return</span> self._run_batch_pubsub()
+        <span class="kw">elif</span> self.opts.pipeline_mode == <span class="str">"SCHEDULED_BATCH"</span>:
+            <span class="kw">return</span> self._run_scheduled_batch()
+        <span class="kw">elif</span> self.opts.pipeline_mode == <span class="str">"STREAMING_WINDOW"</span>:
+            <span class="kw">return</span> self._run_streaming_window()
+
+    <span class="kw">def</span> <span class="fn">_run_batch_pubsub</span>(self):
+        <span class="kw">with</span> beam.Pipeline(options=self.opts) <span class="kw">as</span> p:
+            result = (
+                p
+                | <span class="str">"ReadGCS"</span>    >> ReadGCSTransform(self.mapping, self.schema)
+                | <span class="str">"ParseSchema"</span> >> ParseSchemaTransform(self.schema)
+                | <span class="str">"DQValidate"</span>  >> DQValidatorTransform(self.mapping)
+                | <span class="str">"DeltaDetect"</span> >> DeltaDetectorTransform(self.mapping, self.env_cfg)
+                | <span class="str">"WriteStaging"</span> >> StagingWriteTransform(self.mapping, self.env_cfg)
+            )
+            result | <span class="str">"Audit"</span> >> AuditLoggerTransform(self.opts.run_id, self.env_cfg)
+        <span class="kw">return</span> result
+
+    <span class="kw">def</span> <span class="fn">_run_scheduled_batch</span>(self):
+        <span class="kw">with</span> beam.Pipeline(options=self.opts) <span class="kw">as</span> p:
+            result = (
+                p
+                | <span class="str">"ReadBQ"</span>      >> ReadBQTransform(self.mapping, self.opts.execution_date)
+                | <span class="str">"ParseSchema"</span> >> ParseSchemaTransform(self.schema)
+                | <span class="str">"DQValidate"</span>  >> DQValidatorTransform(self.mapping)
+                | <span class="str">"DeltaDetect"</span> >> DeltaDetectorTransform(self.mapping, self.env_cfg)
+                | <span class="str">"WriteStaging"</span> >> StagingWriteTransform(self.mapping, self.env_cfg)
+            )
+        <span class="kw">return</span> result
+
+    <span class="kw">def</span> <span class="fn">_run_streaming_window</span>(self):
+        stream_cfg = self.mapping.streaming_config
+        <span class="kw">with</span> beam.Pipeline(options=self.opts) <span class="kw">as</span> p:
+            result = (
+                p
+                | <span class="str">"ReadPubSub"</span>   >> ReadPubSubTransform(self.mapping)
+                | <span class="str">"SlidingWindow"</span> >> beam.WindowInto(
+                    beam.window.SlidingWindows(
+                        size=stream_cfg[<span class="str">"window_size_seconds"</span>],
+                        period=stream_cfg[<span class="str">"window_period_seconds"</span>]
+                    )
+                  )
+                | <span class="str">"ParseSchema"</span>  >> ParseSchemaTransform(self.schema)
+                | <span class="str">"DQValidate"</span>   >> DQValidatorTransform(self.mapping)
+                | <span class="str">"DedupeWindow"</span> >> beam.combiners.Latest.PerKey()
+                | <span class="str">"DeltaDetect"</span>  >> DeltaDetectorTransform(self.mapping, self.env_cfg)
+                | <span class="str">"WriteStaging"</span> >> StagingWriteTransform(self.mapping, self.env_cfg)
+            )
+        <span class="kw">return</span> result
+
+
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    opts = NexusPipelineOptions()
+    PipelineFactory(opts).build_and_run()</pre>
+  </div>
+</section>
+
+<!-- ═══ OBSERVABILITY ═══ -->
+<section class="section" id="observability">
+  <div class="section-header">
+    <div class="section-label">Operations</div>
+    <div class="section-title">Observability, Monitoring & Alerting</div>
+    <div class="section-subtitle">NDF instruments every pipeline run with Cloud Monitoring custom metrics, structured Cloud Logging, and BigQuery-backed operational dashboards.</div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="mermaid">
+flowchart LR
+    subgraph OBS["📊 Observability Stack"]
+        direction TB
+        subgraph METRICS["Cloud Monitoring Metrics"]
+            M1["ndf/records_processed"]
+            M2["ndf/dq_fail_rate"]
+            M3["ndf/delta_new_records"]
+            M4["ndf/pipeline_duration_sec"]
+            M5["ndf/schema_drift_detected"]
+        end
+        subgraph LOG["Cloud Logging — Structured"]
+            L1["pipeline_start / end events"]
+            L2["dq_rule_evaluated"]
+            L3["delta_detection_complete"]
+            L4["schema_drift_alert"]
+            L5["error_events"]
+        end
+        subgraph ALERT["Alerting Channels"]
+            A1["Email\nndf-alerts@company.com"]
+            A2["PagerDuty\nProduction incidents"]
+            A3["Pub/Sub\nDownstream consumers"]
+        end
+    end
+
+    subgraph DASH["📈 Dashboards"]
+        D1["Cloud Monitoring\nDataflow Dashboard"]
+        D2["Looker Studio\nNDF Operations Dashboard"]
+        D3["BQ SQL\nndf_meta queries"]
+    end
+
+    METRICS --> ALERT
+    LOG --> ALERT
+    METRICS --> DASH
+    LOG --> DASH
+
+    classDef obs fill:#E8F0FE,stroke:#1967D2,color:#1C2333
+    class M1,M2,M3,M4,M5,L1,L2,L3,L4,L5 obs
+    </div>
+    <div class="diagram-caption">Fig 9. Observability stack — Cloud Monitoring metrics, structured logging, and multi-channel alerting for all pipeline events.</div>
+  </div>
+
+  <h3 style="font-family:var(--font-display);font-size:16px;margin:20px 0 12px">Custom Cloud Monitoring Metrics</h3>
+  <table class="data-table">
+    <thead><tr><th>Metric Name</th><th>Type</th><th>Alerting Threshold</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">ndf/records_processed</td><td><span class="pill pill-blue">COUNTER</span></td><td>—</td><td>Total records processed per run, labelled by mapping_id + env</td></tr>
+      <tr><td class="mono">ndf/dq_fail_rate</td><td><span class="pill pill-orange">GAUGE</span></td><td>&gt; 5% → CRITICAL</td><td>Percentage of records failing any DQ rule</td></tr>
+      <tr><td class="mono">ndf/delta_new_records</td><td><span class="pill pill-green">COUNTER</span></td><td>&gt; 500k → WARN</td><td>Count of new records written to staging (unexpected spikes)</td></tr>
+      <tr><td class="mono">ndf/pipeline_duration_sec</td><td><span class="pill pill-blue">GAUGE</span></td><td>&gt; SLA_sec → WARN</td><td>End-to-end Dataflow job duration</td></tr>
+      <tr><td class="mono">ndf/schema_drift_detected</td><td><span class="pill pill-red">COUNTER</span></td><td>&gt; 0 → CRITICAL</td><td>Schema hash changed vs last cached version</td></tr>
+      <tr><td class="mono">ndf/dead_letter_count</td><td><span class="pill pill-red">COUNTER</span></td><td>&gt; 0 → ERROR</td><td>Records routed to dead-letter table</td></tr>
+      <tr><td class="mono">ndf/watermark_lag_sec</td><td><span class="pill pill-orange">GAUGE</span></td><td>&gt; 120s → WARN</td><td>Streaming watermark lag vs wall clock (Scenario 3)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout info">
+    <strong>Operations Dashboard (Looker Studio):</strong> A pre-built Looker Studio template connects directly to <code>ndf_meta</code> and surfaces: daily run summary table, DQ pass/fail trend, delta volume by table over time, schema drift history, and dead-letter queue growth charts.
+  </div>
+</section>
+
+<!-- ═══ ERROR HANDLING ═══ -->
+<section class="section" id="error-handling">
+  <div class="section-header">
+    <div class="section-label">Resilience</div>
+    <div class="section-title">Error Handling & Retry Strategy</div>
+    <div class="section-subtitle">NDF implements a multi-layer error handling strategy covering DQ failures, pipeline exceptions, GCS read errors, BQ write failures, and schema drift events.</div>
+  </div>
+
+  <div class="three-col">
+    <div class="card">
+      <div class="card-icon">🚫</div>
+      <div class="card-title">DQ Failures</div>
+      <div class="card-desc">Failed records are routed to the per-table dead-letter BQ table with full row data + failing rule IDs. Pipeline continues processing valid rows unless fail rate exceeds threshold.</div>
+      <div class="card-tags"><span class="tag red">QUARANTINE</span><span class="tag red">Dead Letter</span></div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔄</div>
+      <div class="card-title">Transient BQ Failures</div>
+      <div class="card-desc">BQ write failures (rate limit, quota) use exponential backoff with jitter (3 retries: 30s, 90s, 270s). After exhaustion, Dataflow retries the bundle.</div>
+      <div class="card-tags"><span class="tag orange">Retry</span><span class="tag orange">Backoff</span></div>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚠️</div>
+      <div class="card-title">Schema Drift</div>
+      <div class="card-desc">Schema hash comparison on cache refresh. If drift detected: alert sent, pipeline pauses, stakeholders notified. Manual review gate before pipeline resumes.</div>
+      <div class="card-tags"><span class="tag red">CRITICAL</span><span class="tag">Alert</span></div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📨</div>
+      <div class="card-title">PubSub Message Failures</div>
+      <div class="card-desc">Malformed PubSub messages are nacked and routed to a DLQ PubSub topic. A separate Cloud Function monitors the DLQ topic and alerts on accumulation.</div>
+      <div class="card-tags"><span class="tag orange">DLQ Topic</span><span class="tag">Nack</span></div>
+    </div>
+    <div class="card">
+      <div class="card-icon">💾</div>
+      <div class="card-title">GCS Read Failures</div>
+      <div class="card-desc">Missing or corrupted GCS files trigger an immediate pipeline failure with structured error log. Composer DAG marks the task as failed and can retry or skip.</div>
+      <div class="card-tags"><span class="tag red">Fail Fast</span><span class="tag">Alert</span></div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔒</div>
+      <div class="card-title">Idempotency</div>
+      <div class="card-desc">Each run carries a unique <code>run_id</code>. Re-running with the same <code>run_id</code> is safe — delta detection and audit logging detect duplicate run attempts and skip or merge safely.</div>
+      <div class="card-tags"><span class="tag green">Idempotent</span><span class="tag green">Safe Retry</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ DEPLOYMENT ═══ -->
+<section class="section" id="deployment">
+  <div class="section-header">
+    <div class="section-label">Deployment</div>
+    <div class="section-title">Deployment Guide — Flex Template Build & CI/CD</div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:12px">GCS Folder Structure</h3>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div><span class="code-lang">Filesystem — GCS Buckets Layout</span></div>
+        <pre class="code-content">gs://ndf-config-{env}/
+├── environments/
+│   ├── int.json
+│   ├── preprod.json
+│   └── prod.json
+├── mappings/
+│   └── registry.json          <span class="cmt"># master mapping registry</span>
+├── dq_rules/
+│   ├── orders_dq.json
+│   ├── customers_dq.json
+│   └── {table}_dq.json        <span class="cmt"># one per table</span>
+└── templates/
+    └── nexus-flex-template.json
+
+gs://ndf-landing-{env}/        <span class="cmt"># raw file drops (Scenario 1)</span>
+├── orders/
+│   └── 2024-01-15/
+│       └── orders_full.parquet
+└── {source}/
+
+gs://ndf-temp-{env}/           <span class="cmt"># Dataflow temp/staging</span>
+└── dataflow/
+
+gs://ndf-templates/            <span class="cmt"># Flex Template images</span>
+├── nexus-flex-template.json
+└── nexus-flex-template-{version}.json</pre>
+      </div>
+    </div>
+    <div>
+      <h3 style="font-family:var(--font-display);font-size:16px;margin-bottom:12px">Build & Deploy (Cloud Build)</h3>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div><span class="code-lang">YAML — cloudbuild.yaml</span></div>
+        <pre class="code-content">steps:
+  - name: <span class="str">'python:3.11'</span>
+    id: <span class="str">'run-tests'</span>
+    entrypoint: bash
+    args: [<span class="str">'-c'</span>, <span class="str">'pip install -r requirements.txt && pytest tests/ -v'</span>]
+
+  - name: <span class="str">'gcr.io/cloud-builders/docker'</span>
+    id: <span class="str">'build-image'</span>
+    args:
+      - build
+      - -t
+      - gcr.io/$PROJECT_ID/nexus-dataflow:$SHORT_SHA
+      - -f Dockerfile.flex
+      - .
+
+  - name: <span class="str">'gcr.io/cloud-builders/docker'</span>
+    id: <span class="str">'push-image'</span>
+    args:
+      - push
+      - gcr.io/$PROJECT_ID/nexus-dataflow:$SHORT_SHA
+
+  - name: <span class="str">'gcr.io/google.com/cloudsdktool/cloud-sdk'</span>
+    id: <span class="str">'build-flex-template'</span>
+    args:
+      - gcloud
+      - dataflow
+      - flex-template
+      - build
+      - gs://ndf-templates/nexus-flex-template.json
+      - --image=gcr.io/$PROJECT_ID/nexus-dataflow:$SHORT_SHA
+      - --sdk-language=PYTHON
+      - --metadata-file=flex_template_metadata.json
+
+  - name: <span class="str">'gcr.io/google.com/cloudsdktool/cloud-sdk'</span>
+    id: <span class="str">'upload-configs'</span>
+    args:
+      - bash
+      - -c
+      - gsutil -m rsync -r config/ gs://ndf-config-${_ENV}/</pre>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-family:var(--font-display);font-size:16px;margin:20px 0 12px">IAM Roles Required</h3>
+  <table class="data-table">
+    <thead><tr><th>Service Account</th><th>Roles</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>ndf-worker-{env}@</code></td><td>dataflow.worker, bigquery.dataEditor, storage.objectViewer, pubsub.subscriber, secretmanager.secretAccessor</td><td>Dataflow worker SA — reads GCS, writes BQ, reads PubSub, accesses secrets</td></tr>
+      <tr><td><code>ndf-composer-{env}@</code></td><td>dataflow.developer, iam.serviceAccountUser (on worker SA)</td><td>Composer DAG SA — launches Dataflow jobs</td></tr>
+      <tr><td><code>ndf-trigger-{env}@</code></td><td>dataflow.developer, iam.serviceAccountUser (on worker SA)</td><td>Cloud Function SA — launches Dataflow from PubSub trigger</td></tr>
+      <tr><td><code>ndf-build-{env}@</code></td><td>storage.admin, dataflow.developer, cloudbuild.builds.builder, containerregistry.ServiceAgent</td><td>Cloud Build SA — builds and publishes Flex Template</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout success">
+    <strong>Onboarding a New Table:</strong> (1) Add a mapping entry to <code>registry.json</code>, (2) Create a DQ rules JSON file, (3) Ensure the target staging table exists in BQ (or set <code>auto_create_staging: true</code> in mapping), (4) Test in INT, promote to PREPROD, then PROD. No pipeline code changes needed.
+  </div>
+
+  <!-- FINAL SUMMARY DIAGRAM -->
+  <div style="margin-top:32px">
+    <h3 style="font-family:var(--font-display);font-size:18px;margin-bottom:16px;color:var(--text)">End-to-End Summary — All Scenarios Unified View</h3>
+    <div class="diagram-box">
+      <div class="mermaid">
+flowchart TB
+    subgraph ENV["🌐 Environment Layer — int / preprod / prod"]
+        direction LR
+        INT["INT\nIntegration\nTesting"]
+        PP["PREPROD\nUAT /\nStaging"]
+        PROD["PROD\nProduction"]
+    end
+
+    subgraph S1_MINI["📨 Scenario 1: PubSub-Triggered Batch"]
+        direction LR
+        S1A["GCS File\nDrop"] --> S1B["PubSub\nNotification"] --> S1C["Cloud\nFunction"] --> S1D["Dataflow\nBATCH_PUBSUB"]
+    end
+
+    subgraph S2_MINI["⏰ Scenario 2: Composer Scheduled Daily"]
+        direction LR
+        S2A["Composer\nDAG 2AM"] --> S2B["Dataflow\nSCHEDULED_BATCH"]
+    end
+
+    subgraph S3_MINI["🌊 Scenario 3: Streaming Sliding Window"]
+        direction LR
+        S3A["PubSub\nData Stream"] --> S3B["Dataflow\nSTREAMING_WINDOW\n1min sliding"]
+    end
+
+    subgraph SHARED["⚙️ Shared Framework Core (all scenarios)"]
+        direction LR
+        SF1["EnvConfig\nManager"] --> SF2["TableMapping\nRegistry"] --> SF3["Schema\nRegistry\n(BQ INFO_SCHEMA)"]
+        SF4["DQ Rules\nEngine (JSON)"] --> SF5["Delta\nDetector\n(SHA-256)"] --> SF6["BQ Staging\nWriter"]
+    end
+
+    subgraph OUTCOME["💾 Unified Output — BigQuery Staging"]
+        direction LR
+        O1["stg_table\n✅ Valid Delta Records"]
+        O2["stg_dead_letter\n❌ DQ Failed Records"]
+        O3["ndf_meta\n📊 Full Audit Trail"]
+    end
+
+    S1D --> SHARED
+    S2B --> SHARED
+    S3B --> SHARED
+
+    SHARED --> O1
+    SHARED --> O2
+    SHARED --> O3
+
+    ENV -.->|"project/bucket/worker config"| SHARED
+
+    classDef s1c fill:#E8F0FE,stroke:#1967D2,color:#1C2333
+    classDef s2c fill:#E6F4EA,stroke:#1A7340,color:#1C2333
+    classDef s3c fill:#EDE7F6,stroke:#6200EE,color:#1C2333
+    classDef corc fill:#FFF8E1,stroke:#F9AB00,color:#5D4037
+    classDef outc fill:#F1F8E9,stroke:#558B2F,color:#1B5E20
+    class S1A,S1B,S1C,S1D s1c
+    class S2A,S2B s2c
+    class S3A,S3B s3c
+    class SF1,SF2,SF3,SF4,SF5,SF6 corc
+    class O1,O2,O3 outc
+      </div>
+      <div class="diagram-caption">Fig 10. Unified Summary — all three scenarios converge into the same shared framework core and write to the same BigQuery staging layer.</div>
+    </div>
+  </div>
+
+</section>
+
+<!-- FOOTER -->
+<div style="background:var(--text);padding:36px 56px;color:rgba(255,255,255,0.5);font-size:13px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+    <div>
+      <div style="font-family:var(--font-display);font-size:16px;font-weight:700;color:#fff;margin-bottom:6px;">Nexus Dataflow Framework (NDF)</div>
+      <div>Apache Beam 2.55 · Google Cloud Dataflow · BigQuery · PubSub · Cloud Composer</div>
+      <div style="margin-top:6px;">Environments: INT · PREPROD · PROD &nbsp;|&nbsp; Schema-agnostic, config-driven, multi-scenario</div>
+    </div>
+    <div style="text-align:right;">
+      <div>Framework Version: <strong style="color:#fff">1.0.0</strong></div>
+      <div>Document Version: <strong style="color:#fff">v1.0</strong></div>
+      <div style="margin-top:4px;">Designed for GCP Enterprise Data Platform</div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// Initialize Mermaid
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'default',
+  themeVariables: {
+    primaryColor: '#E8F0FE',
+    primaryBorderColor: '#1967D2',
+    primaryTextColor: '#1C2333',
+    secondaryColor: '#E6F4EA',
+    tertiaryColor: '#EDE7F6',
+    background: '#ffffff',
+    mainBkg: '#F8FAFF',
+    nodeBorder: '#D6E0F5',
+    clusterBkg: '#F8FAFF',
+    titleColor: '#1C2333',
+    edgeLabelBackground: '#ffffff',
+    lineColor: '#718096',
+    fontSize: '14px'
+  },
+  flowchart: {
+    padding: 20,
+    nodeSpacing: 35,
+    rankSpacing: 50,
+    curve: 'basis',
+    useMaxWidth: true
+  },
+  er: {
+    useMaxWidth: true,
+    fontSize: 12
+  },
+  securityLevel: 'loose'
+});
+
+// Sidebar active tracking
+const sections = document.querySelectorAll('section[id], .hero');
+const navItems = document.querySelectorAll('.nav-item');
+
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      navItems.forEach(item => {
+        item.classList.remove('active');
+        if (item.getAttribute('href') === '#' + id) {
+          item.classList.add('active');
+        }
+      });
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+document.querySelectorAll('section[id]').forEach(s => obs.observe(s));
+</script>
+</body>
+</html>
